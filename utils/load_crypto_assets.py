@@ -151,16 +151,16 @@ class CryptoData():
 
     def load_cryptos(self, tickers, save = True):
 
-        data_size_0 = -1
-        data_size = 1
+        date_0 = -1
+        date_1 = 1
                 
-        while data_size_0 != data_size:
+        while date_0 != date_1:
             data_df=pd.DataFrame([])
             for i,symbol in enumerate(tickers):
                 data_df_temp = self._get_all_binance(symbol, save = save).reset_index(drop=True)
-                data_size = data_df_temp.shape[0]
+                date_1 = data_df_temp["timestamp"].iloc[-1]
                 if i == 0:
-                    data_size_0 = data_df_temp.shape[0]
+                    date_0 = data_df_temp["timestamp"].iloc[-1]
                 if len(data_df) ==0:
                     data_df = pd.concat([data_df,data_df_temp],axis=1)
                 else:
