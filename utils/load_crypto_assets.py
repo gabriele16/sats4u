@@ -167,5 +167,7 @@ class CryptoData():
         list_basic_features = ['Open', 'High', 'Low', 'Close', 'Volume',"Count"]
         cols_basic_feats = [col for col in data_df.columns if col !="timestamp" and col != "Date"]
         data_df[cols_basic_feats] = data_df[cols_basic_feats].astype(float)
-
+        
+        timestamp_start  = np.int32(time.mktime(datetime.strptime(self.starting_date, '%d %b %Y').timetuple()))*1e3
+        data_df = data_df[data_df["timestamp"] >=  timestamp_start]
         return data_df
