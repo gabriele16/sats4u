@@ -146,7 +146,7 @@ class CryptoData():
 
         return data_df
 
-    def load_loop_over_cryptos(self, tickers, save = True):
+    def load_cryptos(self, tickers, save = True):
 
         data_size_0 = -1
         data_size = 1
