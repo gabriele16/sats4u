@@ -21,6 +21,8 @@ from tqdm import tqdm
 import traceback
 import json
 
+totimestamp = lambda s: np.int32(time.mktime(datetime.strptime(s, "%d/%m/%Y").timetuple()))
+todatetime =  lambda timestamp: datetime.fromtimestamp(timestamp)    
 
 class CryptoData():
 
@@ -42,7 +44,7 @@ class CryptoData():
         self._binsizes = {"1m": 1, "5m": 5, "15m":15 ,"1h": 60, "1d": 1440}
         self._batch_size = 750
 
-    def trade_time_units(self,dt=60,kline_size="1m",starting_date = '1 Mar 2022'):
+    def trade_time_units(self,dt=60,period=15,kline_size="1m",starting_date = '1 Mar 2022'):
 
         self.dt = dt
         self.kline_size = kline_size
@@ -54,6 +56,7 @@ class CryptoData():
         self.week = self.day*7
         self.month = self.day*30
         self.year = self.day*365
+        self.period = period
         self._binance_api_constants()
 
     def load_binance_client(self,secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i'):
@@ -167,7 +170,12 @@ class CryptoData():
         list_basic_features = ['Open', 'High', 'Low', 'Close', 'Volume',"Count"]
         cols_basic_feats = [col for col in data_df.columns if col !="timestamp" and col != "Date"]
         data_df[cols_basic_feats] = data_df[cols_basic_feats].astype(float)
-        
+
         timestamp_start  = np.int32(time.mktime(datetime.strptime(self.starting_date, '%d %b %Y').timetuple()))*1e3
         data_df = data_df[data_df["timestamp"] >=  timestamp_start]
+        data_df["timestamp"]=(data_df["timestamp"]/1000).astype(int)
+        data_df = data_df.set_index("timestamp",drop=False).copy()
+        data_df["Future Date"] = (data_df["timestamp"]+self.dt*self.period).apply(todatetime).values
+        data_df["Date"] = (data_df["timestamp"]+self.dt).apply(todatetime).values        
+
         return data_df
