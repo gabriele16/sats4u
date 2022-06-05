@@ -87,7 +87,7 @@ class Candles():
         scaler = MinMaxScaler(feature_range=(lowrange, uprange))
         self.candles_norm = scaler.fit_transform(self.candles)
     
-    def getlaststeps(self,steps=-60000):
+    def getlaststeps(self,steps=-50000):
 
         self.candles_norm = self.candles_norm[steps:].copy()
 
@@ -111,9 +111,9 @@ class Candles():
                     t = self.candles.iloc[ i + o].name
                     example_time.append([t.minute / 60., t.hour/24])  
 
-        self.x_candles.append(example_candles)
-        self.x_time.append(example_time)
-        self.y.append(self.candles_norm[i+step_back][3])
+            self.x_candles.append(example_candles)
+            self.x_time.append(example_time)
+            self.y.append(self.candles_norm[i+step_back][3])
 
 
 
