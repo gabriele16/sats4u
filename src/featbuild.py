@@ -46,7 +46,11 @@ class Candles():
         self.candles.fillna(method="pad",inplace=True)
         #swap index of close column with the last column
         close_column = self.candles.columns.get_loc("Close")
-        self.candles.swaplevel(close_column)
+        last_col = self.candles.columns[-1]
+        close =  self.candles["Close"]
+        last = self.candles.iloc[-1]
+        self.candles.iloc[-1] = close
+        self.candles.iloc[close_column] = last
 
 
     def ta_plot(self,in_step=-100):
