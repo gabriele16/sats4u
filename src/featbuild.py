@@ -44,6 +44,9 @@ class Candles():
         self.volacc()
         self.candles=self.candles.iloc[self.rollwindow:]
         self.candles.fillna(method="pad",inplace=True)
+        #swap index of close column with the last column
+        close_column = self.candles.columns.get_loc("Close")
+        self.candles.swaplevel(close_column)
 
 
     def ta_plot(self,in_step=-100):
@@ -84,8 +87,14 @@ class Candles():
 
     def normedcandles(self,lowrange=0.2,uprange=0.8):
 
-        scaler = MinMaxScaler(feature_range=(lowrange, uprange))
-        self.candles_norm = scaler.fit_transform(self.candles)
+        self.scaler = MinMaxScaler(feature_range=(lowrange, uprange))
+        self.candles_norm = self.scaler.fit_transform(self.candles)
+
+    def denorm(self,value):
+
+        example = [0.5 for x in range(len(self.candles))]
+        example[-1] = value
+        return self.scaler.inverse_transform([example])[0][-1]
     
     def getlaststeps(self,steps=-50000):
 
@@ -113,7 +122,7 @@ class Candles():
 
             self.x_candles.append(example_candles)
             self.x_time.append(example_time)
-            self.y.append(self.candles_norm[i+step_back][3])
+            self.y.append(self.candles_norm[i+step_back][-1])
 
 
 
