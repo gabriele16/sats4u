@@ -45,12 +45,10 @@ class Candles():
         self.candles=self.candles.iloc[self.rollwindow:]
         self.candles.fillna(method="pad",inplace=True)
         #swap index of close column with the last column
-        close_column = self.candles.columns.get_loc("Close")
+#        close_column = self.candles.columns.get_loc("Close")
         last_col = self.candles.columns[-1]
-        close =  self.candles["Close"].copy()
-        last = self.candles.iloc[:,-1].copy()
-        self.candles.iloc[:,-1] = close.copy()
-        self.candles.iloc[:,close_column] = last.copy()
+        columns_titles = ["Close",last_col]
+        self.candles=self.candles.reindex(columns=columns_titles)
 
 
     def ta_plot(self,in_step=-100):
