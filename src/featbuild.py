@@ -1,5 +1,4 @@
 import json
-import sys
 import pandas as pd
 import numpy as np
 import math
@@ -8,5 +7,94 @@ import time
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow import keras
-import tensorflow as tf
+
+
+class Candles():
+
+    def __init__(self,cryptodf,cryptoname,rollwindow=10):
+
+        self.cryptoname = cryptoname
+        self.rollwindow = rollwindow
+        self.candles = cryptodf[["Date","Low"+cryptoname,"High"+cryptoname,"Open"+cryptoname,"Close"+cryptoname,"Volume"+cryptoname]].copy()
+        self.candles.set_index("Date",inplace = True)
+        self.candles.rename(columns = {"Low"+cryptoname:"Low","High"+cryptoname:"High","Open"+cryptoname:"Open",
+                    "Close"+cryptoname:"Close","Volume"+cryptoname:"Volume"},inplace=True)
+    
+    def _running_moments(self):
+
+        self.mean = self.candles["Close"].rolling(window=self.rollwindow).mean()
+        self.std_dev = self.candles["Close"].rolling(window=self.rollwindow).std()
+
+    def bbands(self):
+
+        self._running_moments(window=self.rollwindow)
+        self.candles["UpperBB"] = self.mean + (2*self.std_dev)
+        self.candles["LowerBB"] = self.mean - (2*self.std_dev)
+
+    def price2volratio(self):
+
+        self.candles["price2volratio"] = (self.candles['Close'] - self.candles['Open']) / self.candles['Volume']
+    
+    def volacc(self):
+
+        self.candles['vol_diff'] = self.candles['Volume'] - self.candles['Volume'].shift(1)
+
+    def buildfeatures(self):
+
+        self.bbands()
+        self.price2volratio()
+        self.volacc()
+        self.candles=self.candles.iloc[self.rollwindow:]
+        self.candles.fillna(method="pad",inplace=True)
+
+
+    def ta_plot(self,in_step=-100):
+
+        title = f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)}   -  + {str(self.candles.iloc[-1].name)} )'"
+
+        mpf.plot(
+            self.candles.iloc[in_step:], 
+            type='candle', 
+            volume=True, 
+            figratio=(24,12), 
+            style='yahoo', 
+            title=title
+        )
+
+    def ta_fullplot(self,in_step=-100):
+
+        title = f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)}   -  + {str(self.candles.iloc[-1].name)} )'"
+
+        bollinger_bands_plot = mpf.make_addplot(self.candles["UpperBB"].iloc[in_step:]-self.candles["LowerBB"].iloc[in_step:], linestyle='dotted')
+        price_over_volume_plot = mpf.make_addplot(self.candles["price2volratio"].iloc[in_step:], panel=1, color='blue')
+        volume_diff_plot = mpf.make_addplot(self.candles["vol_diff"].iloc[in_step:], panel=2, type='bar', ylabel='Vol.Acc.')
+
+        mpf.plot(
+            self.candles.iloc[in_step:],  
+            type='candle', 
+            volume=True, 
+            mav=(3, 11),
+            figratio=(24,12), 
+            style='yahoo', 
+            addplot=[
+                bollinger_bands_plot, 
+                price_over_volume_plot, 
+                volume_diff_plot
+            ], 
+            title=title
+        )
+
+    def normedcandles(self,lowrange=0.2,uprange=0.8):
+
+        scaler = MinMaxScaler(feature_range=(lowrange, uprange))
+        self.candles_norm = scaler.fit_transform(self.candles)
+
+    
+
+
+
+
+
+
+
+
