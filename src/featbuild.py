@@ -48,7 +48,7 @@ class Candles():
 
     def ta_plot(self,in_step=-100):
 
-        title = f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)}   -  + {str(self.candles.iloc[-1].name)} )'"
+        title = f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)} -  {str(self.candles.iloc[-1].name)} )'"
 
         mpf.plot(
             self.candles.iloc[in_step:], 
@@ -63,7 +63,7 @@ class Candles():
 
         title = f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)}   -  + {str(self.candles.iloc[-1].name)} )'"
 
-        bollinger_bands_plot = mpf.make_addplot(self.candles["UpperBB"].iloc[in_step:]-self.candles["LowerBB"].iloc[in_step:], linestyle='dotted')
+        bollinger_bands_plot = mpf.make_addplot(self.candles[["UpperBB","LowerBB"]].iloc[in_step:], linestyle='dotted')
         price_over_volume_plot = mpf.make_addplot(self.candles["price2volratio"].iloc[in_step:], panel=1, color='blue')
         volume_diff_plot = mpf.make_addplot(self.candles["vol_diff"].iloc[in_step:], panel=2, type='bar', ylabel='Vol.Acc.')
 
