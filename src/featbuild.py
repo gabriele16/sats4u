@@ -1,4 +1,3 @@
-import json
 import pandas as pd
 import numpy as np
 import math
@@ -7,7 +6,6 @@ import time
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 from sklearn.preprocessing import MinMaxScaler
-
 
 class Candles():
 
@@ -27,7 +25,7 @@ class Candles():
 
     def bbands(self):
 
-        self._running_moments(window=self.rollwindow)
+        self._running_moments()
         self.candles["UpperBB"] = self.mean + (2*self.std_dev)
         self.candles["LowerBB"] = self.mean - (2*self.std_dev)
 
