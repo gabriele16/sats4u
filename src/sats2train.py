@@ -20,7 +20,7 @@ class TrainTimeSeries():
         split_point = int(len(self.x_candles) * self.split_fraction)       
         self.x_train_candles = np.asarray(self.x_candles[:split_point], dtype=np.float32)
         self.x_train_time = np.asarray(self.x_time[:split_point], dtype=np.float32)
-        self.y_train = np.asarray(y[:split_point], dtype=np.float32)
+        self.y_train = np.asarray(self.y[:split_point], dtype=np.float32)
 
         self.x_test_candles = np.asarray(self.x_candles[split_point:], dtype=np.float32)
         self.x_test_time = np.asarray(self.x_time[split_point:], dtype=np.float32)
@@ -85,3 +85,9 @@ class TrainTimeSeries():
 
         self.model.summary()
         keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
+
+    
+    def sats2model(self):
+
+        self.train_test_split()
+        self.lstm_cnn_model()
