@@ -65,7 +65,7 @@ class Candle2TimeSeries():
         self.gettimeseries()
         print("Generated time-series")
         print(f"Normalized 'candles_norm' with shape : {self.candles_norm.shape}")
-        print(f"Feature data 'x_candles' with shape : {self.x_candles.shape}")
-        print(f"Feature data with time intervals 'x_candles' with shape : {self.x_time.shape}")
+        print(f"Feature data 'x_candles' with size : {len(self.x_candles)}")
+        print(f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
 
 

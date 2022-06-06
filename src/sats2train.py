@@ -8,13 +8,15 @@ def swish(x):
 
 class TrainTimeSeries():
 
-    def __init__(self, x_candles, x_time, y, split_fraction = 0.9):
+    def __init__(self, x_candles, x_time, y, split_fraction = 0.9, epochs = 20, batch_size = 4096):
 
         self.x_candles = x_candles
         self.x_time = x_time
         self.y = y
         self.split_fraction = split_fraction
-    
+        self.epochs = epochs
+        self.batch_size = batch_size
+
     def train_test_split(self):
 
         split_point = int(len(self.x_candles) * self.split_fraction)       
@@ -82,12 +84,29 @@ class TrainTimeSeries():
         self.model = keras.Model(inputs=[input_candles, input_time], outputs=output)
 
         self.model.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.mean_absolute_error)
-
-        self.model.summary()
-        keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
-
     
     def sats2model(self):
 
         self.train_test_split()
         self.lstm_cnn_model()
+        keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
+
+
+    def sats2train(self):
+
+        model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath='weights/weights',
+        save_weights_only=True,
+        monitor='loss',
+        mode='min',
+        save_best_only=True
+        )
+
+        history = self.model.fit(
+                    [self.x_train_candles, self.x_train_time],
+                    self.y_train, epochs=self.epochs, batch_size=self.batch_size,
+        validation_data=(   [self.x_test_candles, self.x_test_time], self.y_test),
+        callbacks=model_checkpoint_callback
+        )
+
+        self.model.load_weights('weights/weights')
