@@ -59,6 +59,13 @@ class Candle2TimeSeries():
     def candles2ts(self):
 
         self.normedcandles()
+        print("Candles Normalized")
         self.getlaststeps()
+        print(f"Extracted last {self.laststeps} steps")
         self.gettimeseries()
+        print("Generated time-series")
+        print(f"Normalized 'candles_norm' with shape : {self.candles_norm.shape}")
+        print(f"Feature data 'x_candles' with shape : {self.x_candles.shape}")
+        print(f"Feature data with time intervals 'x_candles' with shape : {self.x_time.shape}")
+
 
