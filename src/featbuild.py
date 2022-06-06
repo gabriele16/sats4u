@@ -93,44 +93,6 @@ class Candles():
             title=title
         )
 
-    def normedcandles(self,lowrange=0.2,uprange=0.8):
-
-        self.scaler = MinMaxScaler(feature_range=(lowrange, uprange))
-        self.candles_norm = self.scaler.fit_transform(self.candles)
-
-    def denorm(self,value):
-
-        example = [0.5 for x in range(len(self.candles))]
-        example[-1] = value
-        return self.scaler.inverse_transform([example])[0][-1]
-    
-    def getlaststeps(self,steps=-50000):
-
-        self.candles_norm = self.candles_norm[steps:].copy()
-
-    def gettimeseries(self,step_back=48,candle_timestep="15m"):
-
-        self.x_candles = []
-        self.x_time = []
-        self.y = []
-
-        for i in range(len(self.candles_norm) - step_back):
-            example_candles = []
-            example_time = []
-            if candle_timestep == "1h" or candle_timestep == "15m" :
-                for o in range(0, step_back):
-                    example_candles.append(self.candles_norm[i + o])
-                    t = self.candles.iloc[ i + o].name
-                    example_time.append([t.hour / 24, t.weekday() / 7])
-            elif candle_timestep == "1m" :
-                 for o in range(0, step_back):
-                    example_candles.append(self.andles_norm[i + o])
-                    t = self.candles.iloc[ i + o].name
-                    example_time.append([t.minute / 60., t.hour/24])  
-
-            self.x_candles.append(example_candles)
-            self.x_time.append(example_time)
-            self.y.append(self.candles_norm[i+step_back][-1])
 
 
 
