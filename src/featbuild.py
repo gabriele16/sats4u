@@ -37,6 +37,17 @@ class Candles():
 
         self.candles['vol_diff'] = self.candles['Volume'] - self.candles['Volume'].shift(1)
 
+    
+    def switch2lastcol(self,colname="Close"):
+
+        close_column = self.candles.columns.get_loc(colname)
+        last_col = self.candles.columns[-1]
+        columns_titles = [colname,last_col]
+        cand_temp = self.candles[columns_titles]
+        self.candles.iloc[:,-1] = cand_temp[colname]
+        self.candles.iloc[:,close_column] = cand_temp.iloc[:,-1]
+        self.candles.rename(columns={columns_titles[0]:columns_titles[-1],columns_titles[-1]:columns_titles[0]}, inplace = True)
+
     def buildfeatures(self):
 
         self.bbands()
@@ -44,12 +55,7 @@ class Candles():
         self.volacc()
         self.candles=self.candles.iloc[self.rollwindow:]
         self.candles.fillna(method="pad",inplace=True)
-        #swap index of close column with the last column
-#        close_column = self.candles.columns.get_loc("Close")
-        last_col = self.candles.columns[-1]
-        columns_titles = ["Close",last_col]
-        self.candles=self.candles.reindex(columns=columns_titles)
-
+        self.switch2lastcol()
 
     def ta_plot(self,in_step=-100):
 
