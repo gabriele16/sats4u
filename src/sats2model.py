@@ -6,7 +6,7 @@ import tensorflow as tf
 def swish(x):
     return keras.backend.sigmoid(x) * x
 
-class TrainTimeSeries():
+class ModelTimeSeries():
 
     def __init__(self, x_candles, x_time, y, split_fraction = 0.9, epochs = 20, batch_size = 4096):
 
@@ -102,7 +102,7 @@ class TrainTimeSeries():
         save_best_only=True
         )
 
-        history = self.model.fit(
+        self.history = self.model.fit(
                     [self.x_train_candles, self.x_train_time],
                     self.y_train, epochs=self.epochs, batch_size=self.batch_size,
                     validation_data=(   [self.x_test_candles, self.x_test_time], self.y_test),
@@ -110,3 +110,6 @@ class TrainTimeSeries():
                 )
 
         self.model.load_weights('weights/weights')
+
+    def sats2pred(self):
+            self.preds = self.model.predict([self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
