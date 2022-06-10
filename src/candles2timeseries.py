@@ -28,7 +28,7 @@ class Candle2TimeSeries():
 
     def denorm(self,value):
 
-        example = [0.5 for x in range(len(self.candles))]
+        example = [0.5 for x in range(self.candles.shape[1])]
         example[-1] = value
         return self.scaler.inverse_transform([example])[0][-1]
     
