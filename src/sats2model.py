@@ -99,7 +99,9 @@ class ModelTimeSeries():
         keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
 
 
-    def sats2train(self):
+    def sats2train(self, epochs = 20):
+
+        self.epochs = epochs
 
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath='weights/weights',
