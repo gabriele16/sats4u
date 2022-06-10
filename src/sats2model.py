@@ -24,9 +24,14 @@ class ModelTimeSeries():
         self.x_train_time = np.asarray(self.x_time[:split_point], dtype=np.float32)
         self.y_train = np.asarray(self.y[:split_point], dtype=np.float32)
 
-        self.x_test_candles = np.asarray(self.x_candles[split_point:], dtype=np.float32)
-        self.x_test_time = np.asarray(self.x_time[split_point:], dtype=np.float32)
-        self.y_test = np.asarray(self.y[split_point:], dtype=np.float32)
+        if self.split_fraction == 0. or self.split_fraction == 1. : 
+            self.x_test_candles = self.x_train_candles.copy()
+            self.x_test_time = self.x_train_time.copy()
+            self.y_test = self.y_train.copy()
+        else:
+            self.x_test_candles = np.asarray(self.x_candles[split_point:], dtype=np.float32)
+            self.x_test_time = np.asarray(self.x_time[split_point:], dtype=np.float32)
+            self.y_test = np.asarray(self.y[split_point:], dtype=np.float32)
 
 
     def get_conv_lstm_block(self,input,kernel_size_1,kernel_size_2):
