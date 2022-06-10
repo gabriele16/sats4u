@@ -116,7 +116,7 @@ class Candle2TimeSeries():
         print('Fee:', fee)
         print('----------------------')
         print('Buy     ', buys_cnt, '(', buys_cnt_win, 'ok', buys_cnt_losses, 'ko )')
-        print('No-op   ', (len(x_candles) - split_point) - buys_cnt)
+        print('No-op   ', (len(self.x_candles) - split_point) - buys_cnt)
         print('Wallet  ', wallet)
         print('Drawback', drawback)
 
