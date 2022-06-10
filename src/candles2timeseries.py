@@ -68,7 +68,8 @@ class Candle2TimeSeries():
         print(f"Feature data 'x_candles' with size : {len(self.x_candles)}")
         print(f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
 
-    def backtesting(self, x_candles, candles_norm, preds, split_point, fee=0.025):
+
+    def backtest(self, x_candles, candles_norm, preds, split_point, fee=0.025):
 
 
         wallet = 0
