@@ -19,12 +19,14 @@ class ModelTimeSeries():
 
     def train_test_split(self):
 
-        split_point = int(len(self.x_candles) * self.split_fraction)       
+        split_point = int(len(self.x_candles) * self.split_fraction)
+        self.split_point = split_point       
         self.x_train_candles = np.asarray(self.x_candles[:split_point], dtype=np.float32)
         self.x_train_time = np.asarray(self.x_time[:split_point], dtype=np.float32)
         self.y_train = np.asarray(self.y[:split_point], dtype=np.float32)
 
         if self.split_fraction == 0. or self.split_fraction == 1. : 
+            self.split_point = 0
             self.x_test_candles = self.x_train_candles.copy()
             self.x_test_time = self.x_train_time.copy()
             self.y_test = self.y_train.copy()
