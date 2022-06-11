@@ -104,7 +104,6 @@ class ModelTimeSeries():
         self.lstm_cnn_model()
         keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
 
-
     def sats2train(self, model_name, epochs = 20):
 
         self.epochs = epochs
@@ -131,5 +130,9 @@ class ModelTimeSeries():
 
         self.model = keras.models.load_model(model_name)
 
-    def sats2pred(self):
+    def sats2pred(self, predict_on_test = False):
+
+        if predict_on_test:
             self.preds = self.model.predict([self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
+        else:
+            self.preds = self.model.predict([self.x_candles, self.x_time], batch_size=self.batch_size)
