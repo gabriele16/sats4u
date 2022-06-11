@@ -6,3 +6,4 @@ def log_return(series, periods=1):
     if periods < 0:
         log_ret*= -1.
     return log_ret
+    
