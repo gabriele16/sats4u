@@ -33,9 +33,14 @@ class Candle2TimeSeries():
         scaled_val = [self.scaler.inverse_transform(np.array([to_scale]))[0][-1] for to_scale in example ]
         return scaled_val
     
-    def getlaststeps(self):
+    def getlaststeps(self,timeseries,laststeps):
 
-        self.candles_norm = self.candles_norm[-self.laststeps:].copy()
+        if isinstance(timeseries, np.ndarray):
+            return timeseries[-laststeps:]
+        elif isinstance(timeseries,pd.DataFrame):
+            return timeseries.iloc[-laststeps:]
+        else:
+            ValueError('data_type should be np.array or pd.DataFrame')
 
     def gettimeseries(self):
 
@@ -61,7 +66,7 @@ class Candle2TimeSeries():
 
         self.normedcandles()
         print("Candles Normalized")
-        self.getlaststeps()
+        self.candles_norm = self.getlaststeps(self.candles_norm, self.laststeps)
         print(f"Extracted last {self.laststeps} steps")
         self.gettimeseries()
         print("Generated time-series")
