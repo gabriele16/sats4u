@@ -26,11 +26,12 @@ class Candle2TimeSeries():
         self.scaler = MinMaxScaler(feature_range=(self.lownorm, self.upnorm))
         self.candles_norm = self.scaler.fit_transform(self.candles)
 
-    def denorm(self,value):
+    def denorm(self,values):
 
-        example = [0.5 for x in range(self.candles.shape[1])]
-        example[-1] = value
-        return self.scaler.inverse_transform([example])[0][-1]
+        example = self.candles.values[-len(values):,:].copy()
+        example[:,-1] = values.squeeze().copy()
+        scaled_val = [self.scaler.inverse_transform(np.array([to_scale]))[0][-1] for to_scale in example ]
+        return scaled_val
     
     def getlaststeps(self):
 
@@ -69,7 +70,7 @@ class Candle2TimeSeries():
         print(f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
 
 
-    def backtest(self, preds, split_point, fee=0.025):
+    def backtest(self, preds, candles, split_point, fee=0.025):
 
 
         wallet = 0
@@ -83,11 +84,12 @@ class Candle2TimeSeries():
         old_profit_negative = False
         old_profits = 0
 
+        true_vals = self.denorm(candles)
+
         for i in range(split_point, len(self.x_candles)):
-            prediction = preds[i - split_point][0]
-            predicted_close = self.denorm(prediction)
-            previous_close = self.denorm(self.candles_norm[i][-1])
-            real_next_close = self.denorm(self.candles_norm[i+1][-1])
+            predicted_close = preds[i - split_point]
+            previous_close = true_vals[i]
+            real_next_close = true_vals[i+1]
 
             if (previous_close + (previous_close * fee)) < predicted_close:  # buy
                 profit = real_next_close - previous_close
