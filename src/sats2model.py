@@ -110,7 +110,7 @@ class ModelTimeSeries():
         self.epochs = epochs
 
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath='weights/weights',
+        filepath='model/weights',
         save_weights_only=True,
         monitor='loss',
         mode='min',
@@ -124,7 +124,8 @@ class ModelTimeSeries():
                     callbacks=model_checkpoint_callback
                 )
 
-        self.model.load_weights('weights/weights')
+        self.model.load_weights('model/weights')
+        self.model.save('model/LSTM_CNN_model')
 
     def sats2pred(self):
             self.preds = self.model.predict([self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
