@@ -70,7 +70,7 @@ class Candle2TimeSeries():
         print(f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
 
 
-    def backtest(self, preds, candles, split_point, fee=0.025):
+    def backtest(self, preds, true_vals, split_point, fee=0.025):
 
 
         wallet = 0
@@ -83,8 +83,6 @@ class Candle2TimeSeries():
         drawback = 0
         old_profit_negative = False
         old_profits = 0
-
-        true_vals = self.denorm(candles)
 
         for i in range(split_point, len(self.x_candles)):
             predicted_close = preds[i - split_point]
