@@ -77,8 +77,8 @@ class ModelTimeSeries():
         k1 = self.kernel_sizes[1]
         k2 = self.kernel_sizes[2]
 
-        input_candles = keras.Input(shape=(self.x_train_candles.shape[1], self.x_train_candles.shape[2]), name='Candles')
-        input_time = keras.Input(shape=(self.x_train_time.shape[1], self.x_train_time.shape[2]), name='Time')
+        input_candles = keras.Input(shape=(self.x_train_candles.shape[1], self.x_train_candles.shape[2]), name='candles')
+        input_time = keras.Input(shape=(self.x_train_time.shape[1], self.x_train_time.shape[2]), name='time')
 
         conv_1 = self.get_conv_lstm_block(input_candles,kernel_size_1=k0,kernel_size_2=k0)
         conv_2 = self.get_conv_lstm_block(input_candles,kernel_size_1=k1,kernel_size_2=k1)
@@ -105,7 +105,7 @@ class ModelTimeSeries():
         keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
 
 
-    def sats2train(self, epochs = 20):
+    def sats2train(self, model_name, epochs = 20):
 
         self.epochs = epochs
 
@@ -125,7 +125,11 @@ class ModelTimeSeries():
                 )
 
         self.model.load_weights('model/weights')
-        self.model.save('model/LSTM_CNN_model')
+        self.model.save(model_name)
+
+    def load_model(self,model_name):
+
+        self.model = keras.models.load_model(model_name)
 
     def sats2pred(self):
             self.preds = self.model.predict([self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
