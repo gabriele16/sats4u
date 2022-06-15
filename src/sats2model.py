@@ -22,7 +22,7 @@ class ModelTimeSeries():
         split_point = int(len(self.x_candles) * self.split_fraction)
         self.split_point = split_point       
 
-        if self.split_fraction == 0. or self.split_fraction == 1. or train_whole = True: 
+        if self.split_fraction == 0. or self.split_fraction == 1. or train_whole == True: 
 
             self.split_point = 0
             self.x_train_candles = np.asarray(self.x_candles, dtype=np.float32)
