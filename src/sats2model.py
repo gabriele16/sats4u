@@ -17,12 +17,12 @@ class ModelTimeSeries():
         self.epochs = epochs
         self.batch_size = batch_size
 
-    def train_test_split(self):
+    def train_test_split(self, train_whole = False):
 
         split_point = int(len(self.x_candles) * self.split_fraction)
         self.split_point = split_point       
 
-        if self.split_fraction == 0. or self.split_fraction == 1. : 
+        if self.split_fraction == 0. or self.split_fraction == 1. or train_whole = True: 
 
             self.split_point = 0
             self.x_train_candles = np.asarray(self.x_candles, dtype=np.float32)
@@ -130,9 +130,11 @@ class ModelTimeSeries():
 
         self.model = keras.models.load_model(model_name)
 
-    def sats2pred(self, predict_on_test = False):
+    def sats2pred(self, predict_on_test = True):
 
         if predict_on_test:
             self.preds = self.model.predict([self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
         else:
+            self.x_candles = np.asarray(self.x_candles, dtype=np.float32)
+            self.x_time = np.asarray(self.x_time, dtype=np.float32)
             self.preds = self.model.predict([self.x_candles, self.x_time], batch_size=self.batch_size)
