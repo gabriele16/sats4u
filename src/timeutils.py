@@ -24,7 +24,7 @@ def shift_time_index(date_time_indexes,period,delta_time_index):
 
     return date_time_indexes.shift(period,freq = delta_time_index)
 
-def arr2series(arr,name,time_indexes,top_or_bottom):
+def arr2series(arr,name,time_indexes,top_or_bottom="bottom"):
 
     if top_or_bottom == "top":
             return pd.Series(arr,index = time_indexes[:len(arr)],name=name)
