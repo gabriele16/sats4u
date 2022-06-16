@@ -4,6 +4,7 @@ import math
 import os, datetime
 import time
 from datetime import datetime, timedelta
+import timeutils as tu
 # import warnings
 # warnings.filterwarnings('ignore')
 
@@ -19,10 +20,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 import traceback
-import json
-
-totimestamp = lambda s: np.int32(time.mktime(datetime.strptime(s, "%d/%m/%Y").timetuple()))
-todatetime =  lambda timestamp: datetime.fromtimestamp(timestamp)    
+import json   
 
 class CryptoData():
 
@@ -175,7 +173,7 @@ class CryptoData():
         data_df = data_df[data_df["timestamp"] >=  timestamp_start]
         data_df["timestamp"]=(data_df["timestamp"]/1000).astype(int)
         data_df = data_df.set_index("timestamp",drop=False).copy()
-        data_df["Future Date"] = (data_df["timestamp"]+self.dt*self.period).apply(todatetime).values
-        data_df["Date"] = (data_df["timestamp"]+self.dt).apply(todatetime).values        
+        data_df["Future Date"] = (data_df["timestamp"]+self.dt*self.period).apply(tu.todatetime).values
+        data_df["Date"] = (data_df["timestamp"]+self.dt).apply(tu.todatetime).values        
 
         return data_df

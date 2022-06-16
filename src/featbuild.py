@@ -17,6 +17,8 @@ class Candles():
         self.candles.set_index("Date",inplace = True)
         self.candles.rename(columns = {"Low"+cryptoname:"Low","High"+cryptoname:"High","Open"+cryptoname:"Open",
                     "Close"+cryptoname:"Close","Volume"+cryptoname:"Volume"},inplace=True)
+        
+        self.dtime_index = self.candles.index[1] - self.candles.index[0]
     
     def _running_moments(self):
 
