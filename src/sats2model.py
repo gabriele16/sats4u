@@ -4,7 +4,7 @@ from tensorflow import keras
 import tensorflow as tf
 import datetime
 import pickle
-from candles2timeseries import denorm
+from src.candles2timeseries import denorm
 
 class TimeSeries2Model():
 
