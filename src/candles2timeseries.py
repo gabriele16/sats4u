@@ -4,6 +4,14 @@ from datetime import datetime,timedelta
 import time
 from sklearn.preprocessing import MinMaxScaler
 
+
+def denorm(scaler, candles, values):
+
+    example = candles.values[-len(values):,:].copy()
+    example[:,-1] = values.squeeze().copy()
+    scaled_val = [scaler.inverse_transform(np.array([to_scale]))[0][-1] for to_scale in example ]
+    return scaled_val
+
 class Candle2TimeSeries():
 
     def __init__(self, candles, laststeps = 50000, step_back = 48, candle_step_str = "15m",

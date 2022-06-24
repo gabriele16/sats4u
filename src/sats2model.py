@@ -3,13 +3,12 @@ import numpy as np
 from tensorflow import keras
 import tensorflow as tf
 import datetime
+import pickle
+from candles2timeseries import denorm
 
-def swish(x):
-    return keras.backend.sigmoid(x) * x
+class TimeSeries2Model():
 
-class ModelTimeSeries():
-
-    def __init__(self, x_candles, x_time, y, split_fraction = 0.9, epochs = 20, batch_size = 4096):
+    def __init__(self, x_candles, x_time, y, scaler, split_fraction = 0.9, epochs = 20, batch_size = 4096):
 
         self.x_candles = x_candles
         self.x_time = x_time
@@ -17,6 +16,7 @@ class ModelTimeSeries():
         self.split_fraction = split_fraction
         self.epochs = epochs
         self.batch_size = batch_size
+        self.scaler = scaler
 
     def train_test_split(self, train_whole = False):
 
@@ -127,9 +127,16 @@ class ModelTimeSeries():
         self.model.load_weights('model/weights')
         self.model.save(model_name)
 
+        scalerfile = model_name + '/scaler.sav'
+        pickle.dump(self.scaler, open(scalerfile, 'wb'))
+
     def load_model(self,model_name):
 
         self.model = keras.models.load_model(model_name)
+
+    def load_scaler(self,scaler_name):
+
+        self.scaler = pickle.load(open(scaler_name, 'rb'))
 
     def sats2pred(self, predict_on_test = True):
 
