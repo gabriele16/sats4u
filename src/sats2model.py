@@ -105,7 +105,7 @@ class TimeSeries2Model():
         self.lstm_cnn_model()
         keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
 
-    def sats2train(self, model_name, epochs = 20):
+    def sats2train(self, model_name, save_model = True, epochs = 20):
 
         self.epochs = epochs
 
@@ -125,10 +125,11 @@ class TimeSeries2Model():
                 )
 
         self.model.load_weights('model/weights')
-        self.model.save(model_name)
-
-        scalerfile = model_name + '/scaler.sav'
-        pickle.dump(self.scaler, open(scalerfile, 'wb'))
+        
+        if save_model:
+            self.model.save(model_name)
+            scalerfile = model_name + '/scaler.sav'
+            pickle.dump(self.scaler, open(scalerfile, 'wb'))
 
     def load_model(self,model_name):
 
