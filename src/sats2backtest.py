@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 
 def kelly_exp_returns(returns):
@@ -164,13 +164,13 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
     print('Buy     ', buys_cnt, '(', buys_cnt_win, 'ok', buys_cnt_losses, 'ko )')
     print('Avg PCT gain:', mean_pct_gain)
     print('Avg PCT loss:', mean_pct_loss)
-    print('Wins    ', buys_cnt/len(df_preds_true))
-    print('Avg Gain.   ', buys_cnt_win/buys_cnt_losses)
-    print('No-op   ', len(df_preds_true) - buys_cnt)
+    print('Wins  PCT  ', buys_cnt_win/buys_cnt)
+    print('Avg PCT Gain.   ', mean_pct_gain)
+    print('No-op   ', buys_cnt - buys_cnt_win - buys_cnt_losses)
     print('Wallet  ', wallet)
     print('Drawback', drawback)
 
-    kelly_frac = kelly_exp_simple(mean_pct_gain,mean_pct_loss,buys_cnt_win/len(df_preds_true))
+    kelly_frac = kelly_exp_simple(mean_pct_gain,mean_pct_loss,buys_cnt_win/buys_cnt)
 
     print('Kelly Fraction   ',kelly_frac)
 
@@ -190,3 +190,55 @@ def show_backtest_results(wallet,total_wallet_history,single_wallet_history):
 
     plt.tight_layout()
     plt.show()
+
+
+def backtest_debug(preds, true_vals, split_point, step_back, fee=0.025):
+
+        wallet = 0
+        total_wallet_history = []
+        single_wallet_history = []
+
+        buys_cnt = 0
+        buys_cnt_win = 0
+        buys_cnt_losses = 0
+        drawback = 0
+        old_profit_negative = False
+        old_profits = 0
+
+        for i in range(split_point, len(true_vals) - step_back):
+            predicted_close = preds[i - split_point]
+            previous_close = true_vals[i]
+            real_next_close = true_vals[i+1]
+
+            if (previous_close + (previous_close * fee)) < predicted_close:  # buy
+                profit = real_next_close - previous_close
+
+                if profit > 0:
+                    profit = profit - (profit * fee)
+                    buys_cnt_win += 1
+                    old_profit_negative = False
+                else:
+                    profit = profit + (profit * fee)
+                    buys_cnt_losses += 1
+                    if old_profit_negative:
+                        old_profits += profit
+                    else:
+                        old_profits = profit
+                    if old_profits < drawback:
+                        drawback = old_profits
+                    old_profit_negative = True
+                wallet += profit
+                total_wallet_history.append(wallet)
+                single_wallet_history.append(profit)
+                buys_cnt += 1
+            else:
+                old_profit_negative = False
+                old_profits = 0
+
+        print('Fee:', fee)
+        print('----------------------')
+        print('Buy     ', buys_cnt, '(', buys_cnt_win, 'ok', buys_cnt_losses, 'ko )')
+        print('Wallet  ', wallet)
+        print('Drawback', drawback)
+
+        return total_wallet_history, single_wallet_history, wallet
