@@ -20,7 +20,9 @@ def totimestamp(string):
     return np.int32(time.mktime(datetime.strptime(string, "%d/%m/%Y").timetuple()))
 
 
-def shift_time_index(date_time_indexes,period,delta_time_index):
+def shift_time_index(date_time_indexes, period = 0):
+
+    delta_time_index = date_time_indexes.iloc[1] - date_time_indexes.iloc[0]
 
     return date_time_indexes.shift(period,freq = delta_time_index)
 
