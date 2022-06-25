@@ -22,7 +22,7 @@ def totimestamp(string):
 
 def shift_time_index(date_time_indexes, period = 0):
 
-    delta_time_index = date_time_indexes.iloc[1] - date_time_indexes.iloc[0]
+    delta_time_index = date_time_indexes.index[1] - date_time_indexes.index[0]
 
     return date_time_indexes.shift(period,freq = delta_time_index)
 
