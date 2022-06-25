@@ -20,7 +20,7 @@ def totimestamp(string):
     return np.int32(time.mktime(datetime.strptime(string, "%d/%m/%Y").timetuple()))
 
 
-def shift_time_index(date_time_indexes, period = 0):
+def shift_time_index(date_time_indexes, period = 1):
 
     delta_time_index = date_time_indexes[1] - date_time_indexes[0]
 
@@ -41,7 +41,7 @@ def mergetimeseries(series1, series2):
 
     return pd.concat([series1,series2], axis=1)
 
-def merge_true_preds(candles_true,preds,period = 0):
+def merge_true_preds(candles_true,preds,period = 1):
 
     shifted_time_indexes = shift_time_index(candles_true.index,period = period)
     series_predicted = arr2series(preds,"Pred Close",shifted_time_indexes,top_or_bottom="bottom")
