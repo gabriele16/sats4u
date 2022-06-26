@@ -67,7 +67,7 @@ class CryptoData():
         ### API
         self._binance_api_key = api_keys[data1_str]    #Enter your own API-key here
         self._binance_api_secret = api_keys[data2_str] #Enter your own API-secret here
-        self._binance_client = Client(self._binance_api_key,self._binance_api_secret)
+        self.binance_client = Client(self._binance_api_key,self._binance_api_secret)
 
 ### FUNCTIONS
     def _minutes_of_new_data(self,symbol, data, source):
@@ -78,13 +78,13 @@ class CryptoData():
             old = datetime.strptime(self.starting_date, '%d %b %Y')
         if source == "binance":      
             try:
-                new = pd.to_datetime(self._binance_client.get_klines(symbol=symbol, interval=self.kline_size)[-1][0], unit='ms')
+                new = pd.to_datetime(self.binance_client.get_klines(symbol=symbol, interval=self.kline_size)[-1][0], unit='ms')
             except BinanceAPIException as e:
                 print(e)
                 print('Something went wrong. Error occured at %s. Wait for 1 hour.' % (datetime.datetime.now().astimezone(timezone('UTC'))))
                 time.sleep(3600)
-                self._binance_client = Client(self._binance_api_key, self._binance_api_secret)
-                new = pd.to_datetime(self._binance_client.get_klines(symbol=symbol, interval=self.kline_size)[-1][0], unit='ms')                
+                self.binance_client = Client(self._binance_api_key, self._binance_api_secret)
+                new = pd.to_datetime(self.binance_client.get_klines(symbol=symbol, interval=self.kline_size)[-1][0], unit='ms')                
                 
         return old, new
 
@@ -107,15 +107,15 @@ class CryptoData():
             print('Downloading %d minutes of new data available for %s, i.e. %d instances of %s data.' % (delta_min, symbol, available_data, self.kline_size))
 
         try:
-            klines = self._binance_client.get_historical_klines(symbol, self.kline_size, 
+            klines = self.binance_client.get_historical_klines(symbol, self.kline_size, 
                                                         oldest_point.strftime("%d %b %Y %H:%M:%S"), 
                                                         newest_point.strftime("%d %b %Y %H:%M:%S"))
         except BinanceAPIException as e:
             print(e)
             print('Something went wrong. Error occured at %s. Wait for 1 hour.' % (datetime.datetime.now().astimezone(timezone('UTC'))))
             time.sleep(3600)
-            self._binance_client = Client(self._binance_api_key, self._binance_api_secret)
-            klines = self._binance_client.get_historical_klines(symbol, self.kline_size, 
+            self.binance_client = Client(self._binance_api_key, self._binance_api_secret)
+            klines = self.binance_client.get_historical_klines(symbol, self.kline_size, 
                                                         oldest_point.strftime("%d %b %Y %H:%M:%S"), 
                                                         newest_point.strftime("%d %b %Y %H:%M:%S"))
 
