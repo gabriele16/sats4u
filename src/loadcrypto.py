@@ -57,7 +57,7 @@ class CryptoData():
         self.period = period
         self._binance_api_constants()
 
-    def load_binance_client(self,secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i'):
+    def load_binance_client(self,secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i',testnet = False):
 
         #secrets_filename = data_folder+'crypto_data/data.json'
         api_keys = {}
@@ -67,7 +67,7 @@ class CryptoData():
         ### API
         self._binance_api_key = api_keys[data1_str]    #Enter your own API-key here
         self._binance_api_secret = api_keys[data2_str] #Enter your own API-secret here
-        self.binance_client = Client(self._binance_api_key,self._binance_api_secret)
+        self.binance_client = Client(self._binance_api_key,self._binance_api_secret, testnet = testnet)
 
 ### FUNCTIONS
     def _minutes_of_new_data(self,symbol, data, source):
