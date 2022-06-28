@@ -72,6 +72,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
                 wallet += profit
                 total_wallet_history.append(wallet)
                 single_wallet_history.append(profit)
+                datetime_iter.append(it)
                 buys_cnt += 1
             else:
                 old_profit_negative = False
@@ -193,18 +194,16 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
 
     return wallet_hist_df, wallet, kelly_frac
 
-
 def show_backtest_results(wallet,wallet_hist_df):
 
     print('Total earned', wallet)
 
-    fig, axes = plt.subplots(nrows=2, ncols=2)
-    wallet_hist_df.plot(y= 0 ,ax=axes[0,0])
-    wallet_hist_df.plot(y= 1 ,ax=axes[0,1])
+    fig, axes = plt.subplots(nrows=1, ncols=2)
+    wallet_hist_df.plot(y= 0 ,ax=axes[0])
+    wallet_hist_df.plot(y= 1 ,ax=axes[1])
 
     plt.tight_layout()
     plt.show()
-
 
 def backtest_debug(preds, true_vals, split_point, step_back, fee=0.025):
 
