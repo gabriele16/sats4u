@@ -43,11 +43,12 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
 
     previous_true_close = df_preds_true.iloc[0,0]
     previous_pred_close = df_preds_true.iloc[0,-1]
-    it = 1
+    it = 0
 
     for index, row in df_preds_true.iloc[1:].iterrows():
         true_close = row[0]
         pred_close = row[-1]
+        it+=1
 
         if long_short == "long":
             if previous_true_close + previous_true_close*fee < pred_close:  # long
