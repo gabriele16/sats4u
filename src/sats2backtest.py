@@ -199,10 +199,10 @@ def show_backtest_results(wallet,wallet_hist_df):
 
     print('Total earned', wallet)
 
-    fig, axes = plt.subplots(nrows=1, ncols=2)
-    wallet_hist_df.plot(y= 0 ,ax=axes[0])
-    wallet_hist_df.plot(y= 1 ,ax=axes[1])
-
+    fig, axes = plt.subplots(nrows=2, ncols=1)
+    fig, axes = plt.subplots(nrows=2, ncols=1)
+    wallet_hist_df.plot.area(y=0,stacked=False,ax=axes[0])
+    axes[1].stem(wallet_hist_df.index,wallet_hist_df.iloc[:,1])
     plt.tight_layout()
     plt.show()
 
