@@ -12,8 +12,11 @@ def kelly_exp_returns(returns):
 
 def kelly_exp_simple(pct_gain,pct_loss,n_wins):
 
-  win_loss_ratio = pct_gain/pct_loss
-  kelly_frac = n_wins - (1- n_wins)/win_loss_ratio
+  if pct_loss != 0.0 and pct_gain != 0.0:
+      win_loss_ratio = pct_gain/pct_loss
+      kelly_frac = n_wins - (1- n_wins)/win_loss_ratio
+  else:
+      kelly_frac = np.nan
   return kelly_frac
 
 def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
@@ -156,21 +159,26 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
         previous_true_close = true_close
         previous_pred_close = pred_close
 
-    mean_pct_gain /= buys_cnt_win
-    mean_pct_loss /= buys_cnt_losses
+    if buys_cnt_win != 0.0:
+        mean_pct_gain /= buys_cnt_win
+        wins_pct =  buys_cnt_win/buys_cnt
+    else:
+        wins_pct = 0.0
+    if buys_cnt_losses !=  0.0:
+        mean_pct_loss /= buys_cnt_losses
     
     print('Fee:', fee)
     print('----------------------')
     print('Buy     ', buys_cnt, '(', buys_cnt_win, 'ok', buys_cnt_losses, 'ko )')
     print('Avg PCT gain:', mean_pct_gain)
     print('Avg PCT loss:', mean_pct_loss)
-    print('Wins  PCT  ', buys_cnt_win/buys_cnt)
+    print('Wins  PCT  ', wins_pct)
     print('Avg PCT Gain.   ', mean_pct_gain)
     print('No-op   ', buys_cnt - buys_cnt_win - buys_cnt_losses)
     print('Wallet  ', wallet)
     print('Drawback', drawback)
 
-    kelly_frac = kelly_exp_simple(mean_pct_gain,mean_pct_loss,buys_cnt_win/buys_cnt)
+    kelly_frac = kelly_exp_simple(mean_pct_gain,mean_pct_loss,wins_pct)
 
     print('Kelly Fraction   ',kelly_frac)
 
