@@ -27,6 +27,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
     wallet = 0
     total_wallet_history = []
     single_wallet_history = []
+    datetime_iter = []
 
     buys_cnt = 0
     buys_cnt_win = 0
@@ -42,6 +43,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
 
     previous_true_close = df_preds_true.iloc[0,0]
     previous_pred_close = df_preds_true.iloc[0,-1]
+    it = 1
 
     for index, row in df_preds_true.iloc[1:].iterrows():
         true_close = row[0]
@@ -101,6 +103,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
                 wallet += profit
                 total_wallet_history.append(wallet)
                 single_wallet_history.append(profit)
+                datetime_iter.append(it)
                 buys_cnt += 1
             else:
                 old_profit_negative = False
@@ -132,6 +135,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
                 wallet += profit
                 total_wallet_history.append(wallet)
                 single_wallet_history.append(profit)
+                datetime_iter.append(it)
                 buys_cnt += 1
             elif previous_true_close *(1+fee) < pred_close:  # long
                 profit = true_close - previous_true_close
@@ -154,6 +158,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
                 wallet += profit
                 total_wallet_history.append(wallet)
                 single_wallet_history.append(profit)
+                datetime_iter.append(it)
                 buys_cnt += 1
 
         previous_true_close = true_close
@@ -182,19 +187,20 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
 
     print('Kelly Fraction   ',kelly_frac)
 
-    return total_wallet_history, single_wallet_history, wallet, kelly_frac
+    wallet_hist_df = pd.DataFrame(np.array([total_wallet_history, single_wallet_history]).T,
+                                            index=df_preds_true.index[datetime_iter],
+                                            columns=["Tot. Wallet hist", "Single Wallet hist" ])
+
+    return wallet_hist_df, wallet, kelly_frac
 
 
-def show_backtest_results(wallet,total_wallet_history,single_wallet_history):
+def show_backtest_results(wallet,wallet_hist_df):
+
     print('Total earned', wallet)
 
-    plt.subplot(1, 2, 1)
-    plt.plot(total_wallet_history)
-    plt.title('Cumulative earned history')
-
-    plt.subplot(1, 2, 2)
-    plt.plot(single_wallet_history)
-    plt.title('Single movement earned history')
+    fig, axes = plt.subplots(nrows=2, ncols=2)
+    wallet_hist_df.plot(y= 0 ,ax=axes[0,0])
+    wallet_hist_df.plot(y= 1 ,ax=axes[0,1])
 
     plt.tight_layout()
     plt.show()
@@ -248,5 +254,9 @@ def backtest_debug(preds, true_vals, split_point, step_back, fee=0.025):
         print('Buy     ', buys_cnt, '(', buys_cnt_win, 'ok', buys_cnt_losses, 'ko )')
         print('Wallet  ', wallet)
         print('Drawback', drawback)
+
+        wallet_hist_df = pd.DataFrame(np.array([total_wallet_history, single_wallet_history]).T,
+                                     columns=["Tot. Wallet hist", "Single Wallet hist" ])
+
 
         return total_wallet_history, single_wallet_history, wallet
