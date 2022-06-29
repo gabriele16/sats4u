@@ -19,15 +19,21 @@ def kelly_exp_simple(pct_gain,pct_loss,n_wins):
       kelly_frac = np.nan
   return kelly_frac
 
-def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
+def backtest_temp_df(df_preds_true, step_back = 10, long_short = "long", fee=0.025, cutoff_long = 10.,cutoff_short = 10.0):
 
     if long_short != "long" and long_short != "short" and long_short != "longshort":
-        raise ValueError("Can only have long, short or longshort")
+        raise ValueError("long_short can only be long, short or longshort")
+
+    if cutoff_long < 1.0 or cutoff_short < 1.0:
+        raise ValueError("cutoff_long and cutoff_short should be greater/equal to 1.0")      
 
     wallet = 0
     total_wallet_history = []
     single_wallet_history = []
     datetime_iter = []
+
+    fee_factor_long = (1+fee/cutoff_long)
+    fee_factor_short = (1+fee/cutoff_short)
 
     buys_cnt = 0
     buys_cnt_win = 0
@@ -41,17 +47,19 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
     delta = df_preds_true.index[1]-df_preds_true.index[0]
     df_preds_true.iloc[:,0] = df_preds_true.iloc[:,0].shift(step_back,delta)
 
-    previous_true_close = df_preds_true.iloc[0,0]
-    previous_pred_close = df_preds_true.iloc[0,-1]
+    previous_true_close = df_preds_true.iloc[step_back,0]
+    previous_pred_close = df_preds_true.iloc[step_back,-1]
+    print("Initial time", df_preds_true.index[0])
+    print("Final time", df_preds_true.index[-1])
     it = 0
 
-    for index, row in df_preds_true.iloc[1:].iterrows():
+    for index, row in df_preds_true.iloc[step_back+1:].iterrows():
         true_close = row[0]
         pred_close = row[-1]
         it+=1
 
         if long_short == "long":
-            if previous_true_close + previous_true_close*fee < pred_close:  # long
+            if previous_true_close* fee_factor_long < pred_close:  # long
                 profit = true_close - previous_true_close
                 if profit > 0:
                     profit = profit - (profit * fee)
@@ -80,7 +88,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
                 old_profits = 0
 
         elif long_short == "short":
-            if  previous_true_close*(1+fee) > pred_close:  # short
+            if  previous_true_close * fee_factor_short > pred_close:  # short
                 profit = -1*(true_close - previous_true_close)
                 if profit > 0:
                     # win
@@ -112,7 +120,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
                 old_profits = 0
 
         elif long_short == "longshort":
-            if  previous_true_close *(1+fee) > pred_close:  # short
+            if  previous_true_close *fee_factor_short > pred_close:  # short
                 profit = true_close - previous_true_close
                 if profit < 0:
                     # win
@@ -139,7 +147,7 @@ def backtest_df(df_preds_true, step_back, long_short = "long", fee=0.025):
                 single_wallet_history.append(profit)
                 datetime_iter.append(it)
                 buys_cnt += 1
-            elif previous_true_close *(1+fee) < pred_close:  # long
+            elif previous_true_close * fee_factor_long < pred_close:  # long
                 profit = true_close - previous_true_close
                 if profit > 0:
                     profit = profit - (profit * fee)
