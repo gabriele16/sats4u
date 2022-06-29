@@ -19,7 +19,7 @@ def kelly_exp_simple(pct_gain,pct_loss,n_wins):
       kelly_frac = np.nan
   return kelly_frac
 
-def backtest_temp_df(df_preds_true, step_back = 10, long_short = "long", fee=0.025, cutoff_long = 10.,cutoff_short = 10.0):
+def backtest_df(df_preds_true, step_back = 10, long_short = "long", fee=0.025, cutoff_long = 10.,cutoff_short = 10.0):
 
     if long_short != "long" and long_short != "short" and long_short != "longshort":
         raise ValueError("long_short can only be long, short or longshort")
