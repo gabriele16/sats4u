@@ -28,7 +28,7 @@ import json
 
 
 class CryptoData:
-    def __init__(self, asset_details, data_folder, verbose=True):
+    def __init__(self, asset_details, data_folder, verbose):
 
         self.asset_details = asset_details
         self.data_folder = data_folder
