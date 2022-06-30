@@ -71,20 +71,24 @@ class Candle2TimeSeries:
             self.x_time.append(example_time)
             self.y.append(self.candles_norm[i + self.step_back][-1])
 
-    def candles2ts(self):
+    def candles2ts(self, verbose=True):
 
         self.normedcandles()
-        print("Candles Normalized")
+        if verbose:
+            print("Candles Normalized")
         self.candles_norm = self.getlaststeps(
             self.candles_norm, self.laststeps)
-        print(f"Extracted last {self.laststeps} steps")
+        if verbose:
+            print(f"Extracted last {self.laststeps} steps")
         self.gettimeseries()
-        print("Generated time-series")
-        print(
-            f"Normalized 'candles_norm' with shape : {self.candles_norm.shape}")
-        print(f"Feature data 'x_candles' with size : {len(self.x_candles)}")
-        print(
-            f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
+        if verbose:
+            print("Generated time-series")
+            print(
+                f"Normalized 'candles_norm' with shape : {self.candles_norm.shape}")
+            print(
+                f"Feature data 'x_candles' with size : {len(self.x_candles)}")
+            print(
+                f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
 
     # def backtest(self, preds, true_vals, split_point, step_back, fee=0.025):
 
