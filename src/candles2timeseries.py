@@ -1,28 +1,28 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 import time
 from sklearn.preprocessing import MinMaxScaler
 
 
 def denorm(scaler, candles, values):
 
-    example = candles.values[-len(values):,:].copy()
-    example[:,-1] = values.squeeze().copy()
-    scaled_val = [scaler.inverse_transform(np.array([to_scale]))[0][-1] for to_scale in example ]
+    example = candles.values[-len(values):, :].copy()
+    example[:, -1] = values.squeeze().copy()
+    scaled_val = [scaler.inverse_transform(np.array([to_scale]))[
+        0][-1] for to_scale in example]
     return scaled_val
 
-class Candle2TimeSeries():
 
-    def __init__(self, candles, laststeps = 50000, step_back = 48, candle_step_str = "15m",
-                lownorm = 0.2, upnorm= 0.8):
+class Candle2TimeSeries:
+    def __init__(self, candles, laststeps=50000, step_back=48, candle_step_str="15m", lownorm=0.2, upnorm=0.8):
 
         self.candles = candles
-        self.laststeps= laststeps
+        self.laststeps = laststeps
         self.step_back = step_back
         self.lownorm = lownorm
         self.upnorm = upnorm
-        self.candle_step_str = candle_step_str    
+        self.candle_step_str = candle_step_str
         self.scaler = []
         self.candles_norm = []
         self.x_candles = []
@@ -34,57 +34,59 @@ class Candle2TimeSeries():
         self.scaler = MinMaxScaler(feature_range=(self.lownorm, self.upnorm))
         self.candles_norm = self.scaler.fit_transform(self.candles)
 
-    def denorm(self,values):
+    def denorm(self, values):
 
-        example = self.candles.values[-len(values):,:].copy()
-        example[:,-1] = values.squeeze().copy()
-        scaled_val = [self.scaler.inverse_transform(np.array([to_scale]))[0][-1] for to_scale in example ]
+        example = self.candles.values[-len(values):, :].copy()
+        example[:, -1] = values.squeeze().copy()
+        scaled_val = [self.scaler.inverse_transform(np.array([to_scale]))[
+            0][-1] for to_scale in example]
         return scaled_val
-    
-    def getlaststeps(self,timeseries,laststeps):
+
+    def getlaststeps(self, timeseries, laststeps):
 
         if isinstance(timeseries, np.ndarray):
             return timeseries[-laststeps:]
-        elif isinstance(timeseries,pd.DataFrame):
+        elif isinstance(timeseries, pd.DataFrame):
             return timeseries.iloc[-laststeps:]
         else:
-            ValueError('data_type should be np.array or pd.DataFrame')
+            ValueError("data_type should be np.array or pd.DataFrame")
 
     def gettimeseries(self):
 
         for i in range(len(self.candles_norm) - self.step_back):
             example_candles = []
             example_time = []
-            if self.candle_step_str == "1h" or self.candle_step_str == "15m" :
+            if self.candle_step_str == "1h" or self.candle_step_str == "15m":
                 for o in range(0, self.step_back):
                     example_candles.append(self.candles_norm[i + o])
-                    t = self.candles.iloc[ i + o].name
+                    t = self.candles.iloc[i + o].name
                     example_time.append([t.hour / 24, t.weekday() / 7])
-            elif self.candle_step_str == "1m" :
-                 for o in range(0, self.step_back):
+            elif self.candle_step_str == "1m":
+                for o in range(0, self.step_back):
                     example_candles.append(self.andles_norm[i + o])
-                    t = self.candles.iloc[ i + o].name
-                    example_time.append([t.minute / 60., t.hour/24])  
+                    t = self.candles.iloc[i + o].name
+                    example_time.append([t.minute / 60.0, t.hour / 24])
 
             self.x_candles.append(example_candles)
             self.x_time.append(example_time)
-            self.y.append(self.candles_norm[i+self.step_back][-1])
+            self.y.append(self.candles_norm[i + self.step_back][-1])
 
     def candles2ts(self):
 
         self.normedcandles()
         print("Candles Normalized")
-        self.candles_norm = self.getlaststeps(self.candles_norm, self.laststeps)
+        self.candles_norm = self.getlaststeps(
+            self.candles_norm, self.laststeps)
         print(f"Extracted last {self.laststeps} steps")
         self.gettimeseries()
         print("Generated time-series")
-        print(f"Normalized 'candles_norm' with shape : {self.candles_norm.shape}")
+        print(
+            f"Normalized 'candles_norm' with shape : {self.candles_norm.shape}")
         print(f"Feature data 'x_candles' with size : {len(self.x_candles)}")
-        print(f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
-
+        print(
+            f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
 
     # def backtest(self, preds, true_vals, split_point, step_back, fee=0.025):
-
 
     #     wallet = 0
     #     total_wallet_history = []
@@ -134,5 +136,3 @@ class Candle2TimeSeries():
     #     print('Drawback', drawback)
 
     #     return total_wallet_history, single_wallet_history, wallet
-
-

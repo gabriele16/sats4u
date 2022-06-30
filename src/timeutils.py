@@ -4,7 +4,6 @@ import os, datetime
 import time
 from datetime import datetime, timedelta
 
-
 def log_return(series, periods=1):
     log_ret = np.log(series).diff(periods=periods)
     if periods < 0:
@@ -40,7 +39,7 @@ def arr2series(arr,name,time_indexes,top_or_bottom="bottom"):
 def mergetimeseries(series1, series2):
 
     return pd.concat([series1,series2], axis=1)
-
+    
 def merge_true_preds(candles_true,preds,period = 1):
 
     shifted_time_indexes = shift_time_index(candles_true.index,period = period)

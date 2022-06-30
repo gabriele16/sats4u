@@ -6,9 +6,9 @@ import datetime
 import pickle
 from src.candles2timeseries import denorm
 
-class TimeSeries2Model():
 
-    def __init__(self, x_candles, x_time, y, scaler, split_fraction = 0.9, epochs = 20, batch_size = 4096):
+class TimeSeries2Model:
+    def __init__(self, x_candles, x_time, y, scaler, split_fraction=0.9, epochs=20, batch_size=4096):
 
         self.x_candles = x_candles
         self.x_time = x_time
@@ -18,12 +18,12 @@ class TimeSeries2Model():
         self.batch_size = batch_size
         self.scaler = scaler
 
-    def train_test_split(self, train_whole = False):
+    def train_test_split(self, train_whole=False):
 
         split_point = int(len(self.x_candles) * self.split_fraction)
-        self.split_point = split_point       
+        self.split_point = split_point
 
-        if self.split_fraction == 0. or self.split_fraction == 1. or train_whole == True: 
+        if self.split_fraction == 0.0 or self.split_fraction == 1.0 or train_whole == True:
 
             self.split_point = 0
             self.x_train_candles = np.asarray(self.x_candles, dtype=np.float32)
@@ -34,7 +34,7 @@ class TimeSeries2Model():
             self.y_test = self.y_train.copy()
 
         else:
-            
+
             self.x_train_candles = np.asarray(self.x_candles[:split_point], dtype=np.float32)
             self.x_train_time = np.asarray(self.x_time[:split_point], dtype=np.float32)
             self.y_train = np.asarray(self.y[:split_point], dtype=np.float32)
@@ -42,31 +42,26 @@ class TimeSeries2Model():
             self.x_test_time = np.asarray(self.x_time[split_point:], dtype=np.float32)
             self.y_test = np.asarray(self.y[split_point:], dtype=np.float32)
 
-
-    def get_conv_lstm_block(self,input,kernel_size_1,kernel_size_2):
+    def get_conv_lstm_block(self, input, kernel_size_1, kernel_size_2):
 
         conv_1 = keras.layers.Conv1D(
-            filters=self.filter_size_1,
-            kernel_size=kernel_size_1,
-            activation=keras.activations.swish,
-            padding='same'
+            filters=self.filter_size_1, kernel_size=kernel_size_1, activation=keras.activations.swish, padding="same"
         )(input)
         average_1 = keras.layers.AveragePooling1D()(conv_1)
-        
+
         conv_2 = keras.layers.Conv1D(
-            filters=self.filter_size_2,
-            kernel_size=kernel_size_2,
-            activation=keras.activations.swish,
-            padding='same'
+            filters=self.filter_size_2, kernel_size=kernel_size_2, activation=keras.activations.swish, padding="same"
         )(average_1)
         average_2 = keras.layers.AveragePooling1D()(conv_2)
-        
+
         lstm_1 = keras.layers.LSTM(units=self.filter_size_2, return_sequences=True)(average_2)
         lstm_2 = keras.layers.LSTM(units=self.filter_size_2)(lstm_1)
-        
+
         return lstm_2
 
-    def lstm_cnn_model(self,kernel_sizes = [3,7,13], filter_size_1 = 32, filter_size_2 = 64, lstm_units = 8, dense_units = 128):
+    def lstm_cnn_model(
+        self, kernel_sizes=[3, 7, 13], filter_size_1=32, filter_size_2=64, lstm_units=8, dense_units=128
+    ):
 
         self.kernel_sizes = kernel_sizes
         self.filter_size_1 = filter_size_1
@@ -78,12 +73,14 @@ class TimeSeries2Model():
         k1 = self.kernel_sizes[1]
         k2 = self.kernel_sizes[2]
 
-        input_candles = keras.Input(shape=(self.x_train_candles.shape[1], self.x_train_candles.shape[2]), name='candles')
-        input_time = keras.Input(shape=(self.x_train_time.shape[1], self.x_train_time.shape[2]), name='time')
+        input_candles = keras.Input(
+            shape=(self.x_train_candles.shape[1], self.x_train_candles.shape[2]), name="candles"
+        )
+        input_time = keras.Input(shape=(self.x_train_time.shape[1], self.x_train_time.shape[2]), name="time")
 
-        conv_1 = self.get_conv_lstm_block(input_candles,kernel_size_1=k0,kernel_size_2=k0)
-        conv_2 = self.get_conv_lstm_block(input_candles,kernel_size_1=k1,kernel_size_2=k1)
-        conv_3 = self.get_conv_lstm_block(input_candles,kernel_size_1=k2,kernel_size_2=k2)
+        conv_1 = self.get_conv_lstm_block(input_candles, kernel_size_1=k0, kernel_size_2=k0)
+        conv_2 = self.get_conv_lstm_block(input_candles, kernel_size_1=k1, kernel_size_2=k1)
+        conv_3 = self.get_conv_lstm_block(input_candles, kernel_size_1=k2, kernel_size_2=k2)
 
         lstm_time_1 = keras.layers.LSTM(units=self.lstm_units, return_sequences=True)(input_time)
         lstm_time_2 = keras.layers.LSTM(units=self.lstm_units)(lstm_time_1)
@@ -98,48 +95,46 @@ class TimeSeries2Model():
         self.model = keras.Model(inputs=[input_candles, input_time], outputs=output)
 
         self.model.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.mean_absolute_error)
-    
+
     def sats2model(self):
 
         self.train_test_split()
         self.lstm_cnn_model()
         keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
 
-    def sats2train(self, model_name, save_model = True, epochs = 20):
+    def sats2train(self, model_name, save_model=True, epochs=20):
 
         self.epochs = epochs
 
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath='model/weights',
-        save_weights_only=True,
-        monitor='loss',
-        mode='min',
-        save_best_only=True
+            filepath="model/weights", save_weights_only=True, monitor="loss", mode="min", save_best_only=True
         )
 
         self.history = self.model.fit(
-                    [self.x_train_candles, self.x_train_time],
-                    self.y_train, epochs=self.epochs, batch_size=self.batch_size,
-                    validation_data=(   [self.x_test_candles, self.x_test_time], self.y_test),
-                    callbacks=model_checkpoint_callback
-                )
+            [self.x_train_candles, self.x_train_time],
+            self.y_train,
+            epochs=self.epochs,
+            batch_size=self.batch_size,
+            validation_data=([self.x_test_candles, self.x_test_time], self.y_test),
+            callbacks=model_checkpoint_callback,
+        )
 
-        self.model.load_weights('model/weights')
-        
+        self.model.load_weights("model/weights")
+
         if save_model:
             self.model.save(model_name)
-            scalerfile = model_name + '/scaler.sav'
-            pickle.dump(self.scaler, open(scalerfile, 'wb'))
+            scalerfile = model_name + "/scaler.sav"
+            pickle.dump(self.scaler, open(scalerfile, "wb"))
 
-    def load_model(self,model_name):
+    def load_model(self, model_name):
 
         self.model = keras.models.load_model(model_name)
 
-    def load_scaler(self,scaler_name):
+    def load_scaler(self, scaler_name):
 
-        self.scaler = pickle.load(open(scaler_name, 'rb'))
+        self.scaler = pickle.load(open(scaler_name, "rb"))
 
-    def sats2pred(self, predict_on_test = True):
+    def sats2pred(self, predict_on_test=True):
 
         if predict_on_test:
             self.preds = self.model.predict([self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
