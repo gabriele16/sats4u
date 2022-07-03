@@ -27,7 +27,8 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
         raise ValueError("long_short can only be long, short or longshort")
 
     if cutoff_long < 1.0 or cutoff_short < 1.0:
-        raise ValueError("cutoff_long and cutoff_short should be greater/equal to 1.0")
+        raise ValueError(
+            "cutoff_long and cutoff_short should be greater/equal to 1.0")
 
     wallet = 0
     total_wallet_history = []
@@ -55,7 +56,7 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
     print("Final time", df_preds_true.index[-1])
     it = 0
 
-    for index, row in df_preds_true.iloc[step_back + 1 :].iterrows():
+    for index, row in df_preds_true.iloc[step_back + 1:].iterrows():
         true_close = row[0]
         pred_close = row[-1]
         it += 1
@@ -196,7 +197,6 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
     print("Drawback", drawback)
 
     kelly_frac = kelly_exp_simple(mean_pct_gain, mean_pct_loss, wins_pct)
-
     print("Kelly Fraction   ", kelly_frac)
 
     wallet_hist_df = pd.DataFrame(
@@ -204,7 +204,6 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
         index=df_preds_true.index[datetime_iter],
         columns=["Tot. Wallet hist", "Single Wallet hist"],
     )
-
     return wallet_hist_df, wallet, kelly_frac
 
 
@@ -270,7 +269,8 @@ def backtest_debug(preds, true_vals, split_point, step_back, fee=0.025):
     print("Drawback", drawback)
 
     wallet_hist_df = pd.DataFrame(
-        np.array([total_wallet_history, single_wallet_history]).T, columns=["Tot. Wallet hist", "Single Wallet hist"]
+        np.array([total_wallet_history, single_wallet_history]).T, columns=[
+            "Tot. Wallet hist", "Single Wallet hist"]
     )
 
     return total_wallet_history, single_wallet_history, wallet
