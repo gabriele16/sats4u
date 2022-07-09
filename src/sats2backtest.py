@@ -64,6 +64,7 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
 
         if long_short == "long":
             if previous_true_close * fee_factor_long < pred_close:  # long
+                print("Did buy")
                 profit = true_close - previous_true_close
                 if profit > 0:
                     profit = profit - (profit * fee)
@@ -88,6 +89,7 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
                 datetime_iter.append(it)
                 buys_cnt += 1
             else:
+                print("did not buy")
                 old_profit_negative = False
                 old_profits = 0
                 no_op += 1
