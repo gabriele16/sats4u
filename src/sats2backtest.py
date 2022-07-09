@@ -41,6 +41,7 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
     buys_cnt = 0
     buys_cnt_win = 0
     buys_cnt_losses = 0
+    no_op = 0
     drawback = 0
     old_profit_negative = False
     old_profits = 0
@@ -89,6 +90,7 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
             else:
                 old_profit_negative = False
                 old_profits = 0
+                no_op += 1
 
         elif long_short == "short":
             if previous_true_close * fee_factor_short > pred_close:  # short
@@ -121,6 +123,7 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
             else:
                 old_profit_negative = False
                 old_profits = 0
+                no_op += 1
 
         elif long_short == "longshort":
             if previous_true_close * fee_factor_short > pred_close:  # short
@@ -173,6 +176,10 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
                 single_wallet_history.append(profit)
                 datetime_iter.append(it)
                 buys_cnt += 1
+            else:
+                old_profit_negative = False
+                old_profits = 0
+                no_op += 1
 
         previous_true_close = true_close
         previous_pred_close = pred_close
@@ -192,7 +199,7 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", fee=0.025, cutof
     print("Avg PCT loss:", mean_pct_loss)
     print("Wins  PCT  ", wins_pct)
     print("Avg PCT Gain.   ", mean_pct_gain)
-    print("No-op   ", buys_cnt - buys_cnt_win - buys_cnt_losses)
+    print("No-op   ", no_op)
     print("Wallet  ", wallet)
     print("Drawback", drawback)
 
