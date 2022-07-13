@@ -136,7 +136,7 @@ class TimeSeries2Model:
             batch_size=self.batch_size,
             validation_data=(
                 [self.x_test_candles, self.x_test_time], self.y_test),
-            callbacks=model_checkpoint_callback, shuffle=False
+            callbacks=model_checkpoint_callback
         )
 
         self.model.load_weights("model/weights")
