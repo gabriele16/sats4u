@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.utils import shuffle
 from tensorflow import keras
 import tensorflow as tf
 import datetime
@@ -35,11 +36,15 @@ class TimeSeries2Model:
 
         else:
 
-            self.x_train_candles = np.asarray(self.x_candles[:split_point], dtype=np.float32)
-            self.x_train_time = np.asarray(self.x_time[:split_point], dtype=np.float32)
+            self.x_train_candles = np.asarray(
+                self.x_candles[:split_point], dtype=np.float32)
+            self.x_train_time = np.asarray(
+                self.x_time[:split_point], dtype=np.float32)
             self.y_train = np.asarray(self.y[:split_point], dtype=np.float32)
-            self.x_test_candles = np.asarray(self.x_candles[split_point:], dtype=np.float32)
-            self.x_test_time = np.asarray(self.x_time[split_point:], dtype=np.float32)
+            self.x_test_candles = np.asarray(
+                self.x_candles[split_point:], dtype=np.float32)
+            self.x_test_time = np.asarray(
+                self.x_time[split_point:], dtype=np.float32)
             self.y_test = np.asarray(self.y[split_point:], dtype=np.float32)
 
     def get_conv_lstm_block(self, input, kernel_size_1, kernel_size_2):
@@ -54,7 +59,8 @@ class TimeSeries2Model:
         )(average_1)
         average_2 = keras.layers.AveragePooling1D()(conv_2)
 
-        lstm_1 = keras.layers.LSTM(units=self.filter_size_2, return_sequences=True)(average_2)
+        lstm_1 = keras.layers.LSTM(
+            units=self.filter_size_2, return_sequences=True)(average_2)
         lstm_2 = keras.layers.LSTM(units=self.filter_size_2)(lstm_1)
 
         return lstm_2
@@ -74,33 +80,46 @@ class TimeSeries2Model:
         k2 = self.kernel_sizes[2]
 
         input_candles = keras.Input(
-            shape=(self.x_train_candles.shape[1], self.x_train_candles.shape[2]), name="candles"
+            shape=(
+                self.x_train_candles.shape[1], self.x_train_candles.shape[2]), name="candles"
         )
-        input_time = keras.Input(shape=(self.x_train_time.shape[1], self.x_train_time.shape[2]), name="time")
+        input_time = keras.Input(
+            shape=(self.x_train_time.shape[1], self.x_train_time.shape[2]), name="time")
 
-        conv_1 = self.get_conv_lstm_block(input_candles, kernel_size_1=k0, kernel_size_2=k0)
-        conv_2 = self.get_conv_lstm_block(input_candles, kernel_size_1=k1, kernel_size_2=k1)
-        conv_3 = self.get_conv_lstm_block(input_candles, kernel_size_1=k2, kernel_size_2=k2)
+        conv_1 = self.get_conv_lstm_block(
+            input_candles, kernel_size_1=k0, kernel_size_2=k0)
+        conv_2 = self.get_conv_lstm_block(
+            input_candles, kernel_size_1=k1, kernel_size_2=k1)
+        conv_3 = self.get_conv_lstm_block(
+            input_candles, kernel_size_1=k2, kernel_size_2=k2)
 
-        lstm_time_1 = keras.layers.LSTM(units=self.lstm_units, return_sequences=True)(input_time)
+        lstm_time_1 = keras.layers.LSTM(
+            units=self.lstm_units, return_sequences=True)(input_time)
         lstm_time_2 = keras.layers.LSTM(units=self.lstm_units)(lstm_time_1)
 
-        conc = keras.layers.Concatenate(axis=-1)([conv_1, conv_2, conv_3, lstm_time_2])
+        conc = keras.layers.Concatenate(
+            axis=-1)([conv_1, conv_2, conv_3, lstm_time_2])
 
-        dense_1 = keras.layers.Dense(units=self.dense_units, activation=keras.activations.swish)(conc)
-        dense_2 = keras.layers.Dense(units=self.dense_units, activation=keras.activations.swish)(dense_1)
+        dense_1 = keras.layers.Dense(
+            units=self.dense_units, activation=keras.activations.swish)(conc)
+        dense_2 = keras.layers.Dense(
+            units=self.dense_units, activation=keras.activations.swish)(dense_1)
 
-        output = keras.layers.Dense(units=1, activation=keras.activations.linear)(dense_2)
+        output = keras.layers.Dense(
+            units=1, activation=keras.activations.linear)(dense_2)
 
-        self.model = keras.Model(inputs=[input_candles, input_time], outputs=output)
+        self.model = keras.Model(
+            inputs=[input_candles, input_time], outputs=output)
 
-        self.model.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.mean_absolute_error)
+        self.model.compile(optimizer=keras.optimizers.Adam(),
+                           loss=keras.losses.mean_absolute_error)
 
     def sats2model(self):
 
         self.train_test_split()
         self.lstm_cnn_model()
-        keras.utils.plot_model(self.model, "conv_lstm_net.png", show_shapes=True)
+        keras.utils.plot_model(
+            self.model, "conv_lstm_net.png", show_shapes=True)
 
     def sats2train(self, model_name, save_model=True, epochs=20):
 
@@ -115,8 +134,9 @@ class TimeSeries2Model:
             self.y_train,
             epochs=self.epochs,
             batch_size=self.batch_size,
-            validation_data=([self.x_test_candles, self.x_test_time], self.y_test),
-            callbacks=model_checkpoint_callback,
+            validation_data=(
+                [self.x_test_candles, self.x_test_time], self.y_test),
+            callbacks=model_checkpoint_callback, shuffle=False
         )
 
         self.model.load_weights("model/weights")
@@ -137,8 +157,10 @@ class TimeSeries2Model:
     def sats2pred(self, predict_on_test=True):
 
         if predict_on_test:
-            self.preds = self.model.predict([self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
+            self.preds = self.model.predict(
+                [self.x_test_candles, self.x_test_time], batch_size=self.batch_size)
         else:
             self.x_candles = np.asarray(self.x_candles, dtype=np.float32)
             self.x_time = np.asarray(self.x_time, dtype=np.float32)
-            self.preds = self.model.predict([self.x_candles, self.x_time], batch_size=self.batch_size)
+            self.preds = self.model.predict(
+                [self.x_candles, self.x_time], batch_size=self.batch_size)
