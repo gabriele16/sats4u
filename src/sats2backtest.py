@@ -68,7 +68,6 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", compare_true_dat
         true_close = row[0]
         pred_close = row[-1]
         it += 1
-
         if long_short == "long":
             if previous_close * fee_factor_long < pred_close:  # long
                 profit = true_close - previous_true_close
@@ -77,7 +76,6 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", compare_true_dat
                     buys_cnt_win += 1
                     old_profit_negative = False
                     mean_pct_gain += true_close / previous_true_close
-
                 else:
                     profit = profit + (profit * fee)
                     buys_cnt_losses += 1
@@ -98,7 +96,6 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", compare_true_dat
                 old_profit_negative = False
                 old_profits = 0
                 no_op += 1
-
         elif long_short == "short":
             if previous_close * fee_factor_short > pred_close:  # short
                 profit = -1 * (true_close - previous_true_close)
@@ -131,7 +128,6 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", compare_true_dat
                 old_profit_negative = False
                 old_profits = 0
                 no_op += 1
-
         elif long_short == "longshort":
             if previous_close * fee_factor_short > pred_close:  # short
                 profit = true_close - previous_true_close
@@ -187,14 +183,12 @@ def backtest_df(df_preds_true, step_back=10, long_short="long", compare_true_dat
                 old_profit_negative = False
                 old_profits = 0
                 no_op += 1
-
         previous_true_close = true_close
         previous_pred_close = pred_close
         if compare_true_data == False:
             previous_close = previous_pred_close
         else:
             previous_close = previous_true_close
-
     if buys_cnt_win != 0.0:
         mean_pct_gain /= buys_cnt_win
         wins_pct = buys_cnt_win / buys_cnt
