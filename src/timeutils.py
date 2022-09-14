@@ -40,11 +40,11 @@ def mergetimeseries(series1, series2):
 
     return pd.concat([series1,series2], axis=1)
     
-def merge_true_preds(candles_true,preds,period = 1):
+def merge_true_preds(candles_true, preds, columns = ["Close"], period = 1):
 
     shifted_time_indexes = shift_time_index(candles_true.index,period = period)
     series_predicted = arr2series(preds,"Pred Close",shifted_time_indexes,top_or_bottom="bottom")
-    df_preds_true = mergetimeseries(candles_true["Close"], series_predicted)
+    df_preds_true = mergetimeseries(candles_true[columns], series_predicted)
 
     return df_preds_true
 
