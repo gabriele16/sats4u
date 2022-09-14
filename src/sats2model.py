@@ -9,8 +9,16 @@ from src.candles2timeseries import denorm
 
 
 class TimeSeries2Model:
-    def __init__(self, x_candles, x_time, y, scaler, split_fraction=0.9, epochs=20, batch_size=4096):
+    def __init__(self, x_candles, x_time, y, scaler,
+                 target="Close", split_fraction=0.9, epochs=20, batch_size=4096):
 
+        what_to_predict = ['Close', 'LogReturns', 'UpDown']
+
+        if target not in what_to_predict:
+            raise ValueError(
+                "Invalid target to predict, Expected one of: %s" % what_to_predict)
+
+        self.target = target
         self.x_candles = x_candles
         self.x_time = x_time
         self.y = y
@@ -124,7 +132,6 @@ class TimeSeries2Model:
     def sats2train(self, model_name, save_model=True, epochs=20):
 
         self.epochs = epochs
-
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             filepath="model/weights", save_weights_only=True, monitor="loss", mode="min", save_best_only=True
         )

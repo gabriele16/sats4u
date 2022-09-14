@@ -15,8 +15,19 @@ def denorm(scaler, candles, values):
 
 
 class Candle2TimeSeries:
-    def __init__(self, candles, laststeps=50000, step_back=48, candle_step_str="15m", lownorm=0.2, upnorm=0.8):
+    def __init__(self, candles, target="Close", laststeps=50000,
+                 step_back=48, candle_step_str="15m", lownorm=0.2, upnorm=0.8):
 
+        what_to_predict = ['Close', 'LogReturns', 'UpDown']
+
+        if target not in what_to_predict:
+            raise ValueError(
+                "Invalid target to predict, Expected one of: %s" % what_to_predict)
+
+        if target not in candles.columns:
+            raise ValueError(f"{target} is not in the candles dataframe")
+
+        self.target = target
         self.candles = candles
         self.laststeps = laststeps
         self.step_back = step_back
@@ -32,7 +43,14 @@ class Candle2TimeSeries:
     def normedcandles(self):
 
         self.scaler = MinMaxScaler(feature_range=(self.lownorm, self.upnorm))
-        self.candles_norm = self.scaler.fit_transform(self.candles)
+
+        if self.target == "Close":
+            self.candles_norm = self.scaler.fit_transform(self.candles)
+        else:
+            self.candles_norm = self.scaler.fit_transform(
+                self.candles.iloc[:, :-1])
+            self.candles_norm[self.candles.columns[-1]
+                              ] = self.candles.iloc[:, -1]
 
     def denorm(self, values):
 
@@ -89,54 +107,3 @@ class Candle2TimeSeries:
                 f"Feature data 'x_candles' with size : {len(self.x_candles)}")
             print(
                 f"Feature data with time intervals 'x_time' with size : {len(self.x_time)}")
-
-    # def backtest(self, preds, true_vals, split_point, step_back, fee=0.025):
-
-    #     wallet = 0
-    #     total_wallet_history = []
-    #     single_wallet_history = []
-
-    #     buys_cnt = 0
-    #     buys_cnt_win = 0
-    #     buys_cnt_losses = 0
-    #     drawback = 0
-    #     old_profit_negative = False
-    #     old_profits = 0
-
-    #     for i in range(split_point, len(true_vals) - step_back):
-    #         predicted_close = preds[i - split_point]
-    #         previous_close = true_vals[i]
-    #         real_next_close = true_vals[i+1]
-
-    #         if (previous_close + (previous_close * fee)) < predicted_close:  # buy
-    #             profit = real_next_close - previous_close
-    #             if profit > 0:
-    #                 profit = profit - (profit * fee)
-    #                 buys_cnt_win += 1
-    #                 old_profit_negative = False
-    #             else:
-    #                 profit = profit + (profit * fee)
-    #                 buys_cnt_losses += 1
-    #                 if old_profit_negative:
-    #                     old_profits += profit
-    #                 else:
-    #                     old_profits = profit
-    #                 if old_profits < drawback:
-    #                     drawback = old_profits
-    #                 old_profit_negative = True
-    #             wallet += profit
-    #             total_wallet_history.append(wallet)
-    #             single_wallet_history.append(profit)
-    #             buys_cnt += 1
-    #         else:
-    #             old_profit_negative = False
-    #             old_profits = 0
-
-    #     print('Fee:', fee)
-    #     print('----------------------')
-    #     print('Buy     ', buys_cnt, '(', buys_cnt_win, 'ok', buys_cnt_losses, 'ko )')
-    #     print('No-op   ', (len(self.x_candles) - split_point) - buys_cnt)
-    #     print('Wallet  ', wallet)
-    #     print('Drawback', drawback)
-
-    #     return total_wallet_history, single_wallet_history, wallet

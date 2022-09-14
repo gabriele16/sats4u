@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import math
 from datetime import datetime, timedelta
+import src.timeutils as tu
 import time
 import matplotlib.pyplot as plt
 import mplfinance as mpf
@@ -60,6 +61,11 @@ class Candles:
         self.candles["vol_diff"] = self.candles["Volume"] - \
             self.candles["Volume"].shift(1)
 
+    def logreturns(self, colname="Close"):
+
+        self.candles["LogReturns"] = tu.log_return(
+            self.candles[colname], periods=1)
+
     def switch2lastcol(self, colname="Close"):
 
         close_column = self.candles.columns.get_loc(colname)
@@ -72,14 +78,15 @@ class Candles:
             columns={columns_titles[0]: columns_titles[-1], columns_titles[-1]: columns_titles[0]}, inplace=True
         )
 
-    def buildfeatures(self):
+    def buildfeatures(self, colname="Close"):
 
         self.bbands()
         self.price2volratio()
         self.volacc()
+        self.logreturns()
         self.candles = self.candles.iloc[self.rollwindow:]
         self.candles.fillna(method="pad", inplace=True)
-        self.switch2lastcol()
+        self.switch2lastcol(colname)
 
     def ta_plot(self, in_step=-100):
 
