@@ -10,8 +10,14 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 class Candles:
-    def __init__(self, cryptodf, cryptoname, rollwindow=10):
+    def __init__(self, cryptodf, cryptoname, target="Close", rollwindow=10):
 
+        what_to_predict = ['Close', 'LogReturns', 'UpDown']
+        if target not in what_to_predict:
+            raise ValueError(
+                "Invalid target to predict. Expected one of: %s" % what_to_predict)
+
+        self.target = target
         self.cryptoname = cryptoname
         self.rollwindow = rollwindow
         self.candles = cryptodf[
@@ -68,17 +74,19 @@ class Candles:
 
     def switch2lastcol(self, colname="Close"):
 
-        close_column = self.candles.columns.get_loc(colname)
-        last_col = self.candles.columns[-1]
-        columns_titles = [colname, last_col]
-        cand_temp = self.candles[columns_titles]
-        self.candles.iloc[:, -1] = cand_temp[colname]
-        self.candles.iloc[:, close_column] = cand_temp.iloc[:, -1]
-        self.candles.rename(
-            columns={columns_titles[0]: columns_titles[-1], columns_titles[-1]: columns_titles[0]}, inplace=True
-        )
+        if self.candles.columns[-1] != colname:
+            target_column = self.candles.columns.get_loc(colname)
+            last_col = self.candles.columns[-1]
+            columns_titles = [colname, last_col]
+            cand_temp = self.candles[columns_titles]
+            self.candles.iloc[:, -1] = cand_temp[colname]
+            self.candles.iloc[:, target_column] = cand_temp.iloc[:, -1]
+            self.candles.rename(
+                columns={columns_titles[0]: columns_titles[-1],
+                         columns_titles[-1]: columns_titles[0]}, inplace=True
+            )
 
-    def buildfeatures(self, colname="Close"):
+    def buildfeatures(self):
 
         self.bbands()
         self.price2volratio()
@@ -86,7 +94,7 @@ class Candles:
         self.logreturns()
         self.candles = self.candles.iloc[self.rollwindow:]
         self.candles.fillna(method="pad", inplace=True)
-        self.switch2lastcol(colname)
+        self.switch2lastcol(colname=self.target)
 
     def ta_plot(self, in_step=-100):
 
