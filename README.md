@@ -2,14 +2,14 @@
 
 End-to-end Machine-Learning and Deep-Learning framework to accumulate satoshi's using live-algorithmic trading on binance (1 satoshi is 0.00000001 BTC).
 
-# Installation
-Clone on your Google Drive directory, then open one of the notebooks on Google Colab, adjust path, add binance keys and install dependencies and run an example directly on Colab.
+## Installation
+Clone repository on Google Drive directory, then open one of the notebooks on Google Colab, adjust path, add binance keys and install dependencies and run an example directly on Colab.
 Excute the following command
 ```
 ! pip install -r requirements.txt
 ```
 
-# Implementation
+## Implementation
 The following functionalities are implemented:
 * Download live ticker data from Binance with `python-binance`
 * Build technical analysis features using `talib`
@@ -17,8 +17,11 @@ The following functionalities are implemented:
 * Backtest using `backtrader`
 * Live-trading using `python-binance`
 
-# Disclaimer:
-Currently the model is underfitting. Possible ways forward are to follow guidelines documented in
+## Note:
+Currently the model is underfitting.
+Further improvements:
+* Implement some of the features discussed in
 [Advances in Financial Machine Learning](https://www.amazon.co.jp/Advances-Financial-Machine-Learning-English-ebook/dp/B079KLDW21), written by Marcos Lopez de Prado.
-Other improvements are to implement a Denoising Autoencoder to select best features, see [Jane Street: Supervised Autoencoder MLP
+* Implement a Denoising Autoencoder to select best features, see [Jane Street: Supervised Autoencoder MLP
 ](https://www.kaggle.com/code/gogo827jz/jane-street-supervised-autoencoder-mlp/notebook)
+
