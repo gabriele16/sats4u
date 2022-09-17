@@ -44,13 +44,9 @@ class Candle2TimeSeries:
 
         self.scaler = MinMaxScaler(feature_range=(self.lownorm, self.upnorm))
 
-        if self.target == "Close":
-            self.candles_norm = self.scaler.fit_transform(self.candles)
-        else:
-            self.candles_norm = self.scaler.fit_transform(
-                self.candles.iloc[:, :-1])
-            self.candles_norm[self.candles.columns[-1]
-                              ] = self.candles.iloc[:, -1]
+        self.candles_norm = self.scaler.fit_transform(self.candles)
+        if self.target != "Close":
+            self.candles_norm[:, -1] = self.candles.iloc[:, -1].values.copy()
 
     def denorm(self, values):
 
