@@ -16,3 +16,9 @@ The following functionalities are implemented:
 * Build CNN-LSTM model for prediction of either next Close, Log of Returns, Buy/Short signal using `Tensorflow`
 * Backtest using `backtrader`
 * Live-trading using `python-binance`
+
+# Disclaimer:
+Currently the model is underfitting. Possible ways forward are to follow guidelines documented in
+[Advances in Financial Machine Learning](https://www.amazon.co.jp/Advances-Financial-Machine-Learning-English-ebook/dp/B079KLDW21), written by Marcos Lopez de Prado.
+Other improvements are to implement a Denoising Autoencoder to select best features, see [Jane Street: Supervised Autoencoder MLP
+](https://www.kaggle.com/code/gogo827jz/jane-street-supervised-autoencoder-mlp/notebook)
