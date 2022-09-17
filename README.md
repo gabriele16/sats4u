@@ -1,6 +1,6 @@
 # sats4u
 
-End-to-end framework to accumulate satoshi's using live-algorithmic trading on binance aided by deep-learning (1 satoshi is 0.00000001 BTC).
+End-to-end Machine-Learning and Deep-Learning framework to accumulate satoshi's using live-algorithmic trading on binance (1 satoshi is 0.00000001 BTC).
 
 # Installation
 Clone on your Google Drive directory, then open one of the notebooks on Google Colab, adjust path, add binance keys and install dependencies and run an example directly on Colab.
