@@ -27,6 +27,23 @@ class TimeSeries2Model:
         self.batch_size = batch_size
         self.scaler = scaler
 
+        # self.x_train_candles.shape[1], self.x_train_candles.shape[2]
+
+        self.params = {'features_dimensions': [np.shape(self.x_candles[0])[0], np.shape(self.x_candles[0])[1]],
+                       'ae_num_labels': 5,
+                       'ae_hidden_units': [96, 96, 896, 448, 448, 256],
+                       'dropout_rates': [0.03527936123679956, 0.038424974585075086, 0.42409238408801436,
+                                         0.10431484318345882, 0.49230389137187497, 0.32024444956111164,
+                                         0.2716856145683449, 0.4379233941604448],
+                       'ls': 0,
+                       'lr': 1e-3,
+                       'kernel_sizes': [3, 7, 13],
+                       'filter_size_1': 32,
+                       'filter_size_2': 64,
+                       'lstm_units': 8,
+                       'lstm_dense_units':  128,
+                       }
+
     def train_test_split(self, train_whole=False):
 
         split_point = int(len(self.x_candles) * self.split_fraction)
@@ -55,37 +72,106 @@ class TimeSeries2Model:
                 self.x_time[split_point:], dtype=np.float32)
             self.y_test = np.asarray(self.y[split_point:], dtype=np.float32)
 
-    def get_conv_lstm_block(self, input, kernel_size_1, kernel_size_2):
+    def initialize_model_params(self, features_dimensions, ae_hidden_units, dropout_rates,
+                                ae_num_labels=5, ls=1e-2, lr=1e-3,
+                                kernel_sizes=[3, 7, 13], filter_size_1=32,
+                                filter_size_2=64, lstm_units=8, lstm_dense_units=128
+                                ):
+
+        self.features_dimensions = features_dimensions
+        self.ae_hidden_units = ae_hidden_units
+        self.dropout_rates = dropout_rates
+        self.ae_num_labels = ae_num_labels
+        self.ls = ls
+        self.lr = lr
+
+        self.kernel_sizes = kernel_sizes
+        self.filter_size_1 = filter_size_1
+        self.filter_size_2 = filter_size_2
+        self.lstm_units = lstm_units
+        self.lstm_dense_units = lstm_dense_units
+
+        self.k0 = self.kernel_sizes[0]
+        self.k1 = self.kernel_sizes[1]
+        self.k2 = self.kernel_sizes[2]
+
+    def create_ae(self):
+
+        #        inp = tf.keras.layers.Input(shape=(num_columns, ))
+        input_candles_ae = keras.Input(
+            shape=(
+                self.features_dimensions[0], self.features_dimensions[1]), name="candles_ae"
+        )
+        x0 = tf.keras.layers.BatchNormalization()(input_candles_ae)
+
+        encoder = tf.keras.layers.GaussianNoise(self.dropout_rates[0])(x0)
+        encoder = tf.keras.layers.Dense(self.ae_hidden_units[0])(encoder)
+        encoder = tf.keras.layers.BatchNormalization()(encoder)
+        encoder = tf.keras.layers.Activation('swish')(encoder)
+
+        decoder = tf.keras.layers.Dropout(self.dropout_rates[1])(encoder)
+    #    decoder = tf.keras.layers.Dense(num_columns, name='decoder')(decoder)
+        decoder = tf.keras.layers.Dense(shape=(
+            self.features_dimensions[0], self.features_dimensions[1]), name='decoder')(decoder)
+
+        x_ae = tf.keras.layers.Dense(self.ae_hidden_units[1])(decoder)
+        x_ae = tf.keras.layers.BatchNormalization()(x_ae)
+        x_ae = tf.keras.layers.Activation('swish')(x_ae)
+        x_ae = tf.keras.layers.Dropout(self.dropout_rates[2])(x_ae)
+
+        out_ae = tf.keras.layers.Dense(
+            self.num_labels, activation='sigmoid', name='ae_action')(x_ae)
+
+        return out_ae, x0, encoder, decoder
+
+    def create_ae_mlp_model(self, out_ae, x0, encoder, decoder):
+
+        out_ae, x0, encoder, decoder = self.create_ae()
+
+        x = tf.keras.layers.Concatenate()([x0, encoder])
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.Dropout(self.dropout_rates[3])(x)
+
+        for i in range(2, len(self.ae_hidden_units)):
+            x = tf.keras.layers.Dense(self.ae_hidden_units[i])(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('swish')(x)
+            x = tf.keras.layers.Dropout(self.dropout_rates[i + 2])(x)
+
+        out = tf.keras.layers.Dense(
+            self.num_labels, activation='sigmoid', name='action')(x)
+
+        model = tf.keras.models.Model(
+            inputs=self.input_candles_ae, outputs=[decoder, out_ae, out])
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.lr),
+                      loss={'decoder': tf.keras.losses.MeanSquaredError(),
+                            'ae_action': tf.keras.losses.BinaryCrossentropy(label_smoothing=self.ls),
+                            'action': tf.keras.losses.BinaryCrossentropy(label_smoothing=self.ls),
+                            },
+                      metrics={'decoder': tf.keras.metrics.MeanAbsoluteError(name='MAE'),
+                               'ae_action': tf.keras.metrics.AUC(name='AUC'),
+                               'action': tf.keras.metrics.AUC(name='AUC'),
+                               },
+                      )
+        return model
+
+    def create_conv_lstm_block(self, input, kernel_size_1, kernel_size_2):
 
         conv_1 = keras.layers.Conv1D(
             filters=self.filter_size_1, kernel_size=kernel_size_1, activation=keras.activations.swish, padding="same"
         )(input)
         average_1 = keras.layers.AveragePooling1D()(conv_1)
-
         conv_2 = keras.layers.Conv1D(
             filters=self.filter_size_2, kernel_size=kernel_size_2, activation=keras.activations.swish, padding="same"
         )(average_1)
         average_2 = keras.layers.AveragePooling1D()(conv_2)
-
         lstm_1 = keras.layers.LSTM(
             units=self.filter_size_2, return_sequences=True)(average_2)
         lstm_2 = keras.layers.LSTM(units=self.filter_size_2)(lstm_1)
 
         return lstm_2
 
-    def lstm_cnn_model(
-        self, kernel_sizes=[3, 7, 13], filter_size_1=32, filter_size_2=64, lstm_units=8, dense_units=128
-    ):
-
-        self.kernel_sizes = kernel_sizes
-        self.filter_size_1 = filter_size_1
-        self.filter_size_2 = filter_size_2
-        self.lstm_units = lstm_units
-        self.dense_units = dense_units
-
-        k0 = self.kernel_sizes[0]
-        k1 = self.kernel_sizes[1]
-        k2 = self.kernel_sizes[2]
+    def create_lstm_cnn_model(self):
 
         input_candles = keras.Input(
             shape=(
@@ -94,12 +180,12 @@ class TimeSeries2Model:
         input_time = keras.Input(
             shape=(self.x_train_time.shape[1], self.x_train_time.shape[2]), name="time")
 
-        conv_1 = self.get_conv_lstm_block(
-            input_candles, kernel_size_1=k0, kernel_size_2=k0)
-        conv_2 = self.get_conv_lstm_block(
-            input_candles, kernel_size_1=k1, kernel_size_2=k1)
-        conv_3 = self.get_conv_lstm_block(
-            input_candles, kernel_size_1=k2, kernel_size_2=k2)
+        conv_1 = self.create_conv_lstm_block(
+            input_candles, kernel_size_1=self.k0, kernel_size_2=self.k0)
+        conv_2 = self.create_conv_lstm_block(
+            input_candles, kernel_size_1=self.k1, kernel_size_2=self.k1)
+        conv_3 = self.create_conv_lstm_block(
+            input_candles, kernel_size_1=self.k2, kernel_size_2=self.k2)
 
         lstm_time_1 = keras.layers.LSTM(
             units=self.lstm_units, return_sequences=True)(input_time)
@@ -108,24 +194,31 @@ class TimeSeries2Model:
         conc = keras.layers.Concatenate(
             axis=-1)([conv_1, conv_2, conv_3, lstm_time_2])
 
-        dense_1 = keras.layers.Dense(
-            units=self.dense_units, activation=keras.activations.swish)(conc)
-        dense_2 = keras.layers.Dense(
-            units=self.dense_units, activation=keras.activations.swish)(dense_1)
-
-        output = keras.layers.Dense(
-            units=1, activation=keras.activations.linear)(dense_2)
-
-        self.model = keras.Model(
-            inputs=[input_candles, input_time], outputs=output)
-
-        self.model.compile(optimizer=keras.optimizers.Adam(),
-                           loss=keras.losses.mean_absolute_error)
+        if self.target == "UpDown":
+            output = keras.layers.Dense(
+                units=1, activation=keras.activations.sigmoid)(conc)
+            self.model = keras.Model(
+                inputs=[input_candles, input_time], outputs=output)
+            self.model.compile(optimizer=keras.optimizers.Adam(),
+                               loss=tf.keras.losses.BinaryCrossentropy(),
+                               metrics=['accuracy', tf.keras.metrics.AUC()])
+        else:
+            dense_1 = keras.layers.Dense(
+                units=self.lstm_dense_units, activation=keras.activations.swish)(conc)
+            dense_2 = keras.layers.Dense(
+                units=self.lstm_dense_units, activation=keras.activations.swish)(dense_1)
+            output = keras.layers.Dense(
+                units=1, activation=keras.activations.linear)(dense_2)
+            self.model = keras.Model(
+                inputs=[input_candles, input_time], outputs=output)
+            self.model.compile(optimizer=keras.optimizers.Adam(),
+                               loss=keras.losses.mean_absolute_error)
 
     def sats2model(self):
 
         self.train_test_split()
-        self.lstm_cnn_model()
+        self.initialize_model_params(**self.params)
+        self.create_lstm_cnn_model()
         keras.utils.plot_model(
             self.model, "conv_lstm_net.png", show_shapes=True)
 
@@ -171,3 +264,5 @@ class TimeSeries2Model:
             self.x_time = np.asarray(self.x_time, dtype=np.float32)
             self.preds = self.model.predict(
                 [self.x_candles, self.x_time], batch_size=self.batch_size)
+        if self.target == "UpDown":
+            self.preds = (self.preds > 0.5).astype(int)

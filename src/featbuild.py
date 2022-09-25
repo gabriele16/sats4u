@@ -72,6 +72,11 @@ class Candles:
         self.candles["LogReturns"] = tu.log_return(
             self.candles[colname], periods=1)
 
+    def updowns(self, colname="Close"):
+
+        self.candles["UpDown"] = self.candles["Close"].diff(periods=1).apply(
+            lambda x: 1. if x > 0 else 0.)
+
     def switch2lastcol(self, colname="Close"):
 
         if self.candles.columns[-1] != colname:
@@ -83,15 +88,17 @@ class Candles:
             self.candles.iloc[:, target_column] = cand_temp.iloc[:, -1]
             self.candles.rename(
                 columns={columns_titles[0]: columns_titles[-1],
-                         columns_titles[-1]: columns_titles[0]}, inplace=True
-            )
+                         columns_titles[-1]: columns_titles[0]}, inplace=True)
 
     def buildfeatures(self):
 
         self.bbands()
         self.price2volratio()
         self.volacc()
-        self.logreturns()
+        if self.target == "LogReturns":
+            self.logreturns()
+        elif self.target == "UpDown":
+            self.updowns()
         self.candles = self.candles.iloc[self.rollwindow:]
         self.candles.fillna(method="pad", inplace=True)
         self.switch2lastcol(colname=self.target)
