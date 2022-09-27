@@ -18,7 +18,8 @@ The following functionalities are implemented:
 * Live-trading using `python-binance`
 
 ## Note:
-Currently the model is underfitting and thus not profitable upon backtesting.
+When training over about 100 epochs the model is overfitting and is not profitable upon backtesting.
+When trainng for less than 100 epochs the model's accuracy is around 53%. Although this is better than a coin-flip it is still not profitable upon backtesting.
 Further improvements:
 * Implement some of the functions and features discussed in e.g.
 [Advances in Financial Machine Learning](https://www.amazon.co.jp/Advances-Financial-Machine-Learning-English-ebook/dp/B079KLDW21), written by Marcos Lopez de Prado.
