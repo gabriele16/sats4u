@@ -2,11 +2,32 @@
 
 End-to-end Machine-Learning and Deep-Learning framework to accumulate satoshi's using live-algorithmic trading on binance (1 satoshi is 0.00000001 BTC).
 
-## Installation
-Clone repository on Google Drive directory, then open one of the notebooks on Google Colab, adjust path, add binance keys and install dependencies and run an example directly on Colab.
-Excute the following command
+## Running on the Colab Notebook:
+
+* Clone repository inside your Google Drive directory
+* Open `LSTM-CNN-BitCoin.ipynb` with Google Colab and activate the GPU
+* In the Colab notebook adjust path to your own Google Drive, add binance keys files 
+* Execute the notebook.
+
+## Dependencies
+
+The dependencies are listed inside the `requirements.txt` file and can be installed via:
+
 ```
 ! pip install -r requirements.txt
+```
+
+List of dependencies:
+
+```
+python-binance==1.0.16
+mplfinance==0.12.9b0
+tensorflow==2.8.2
+pydot==1.3.0
+graphviz==0.10.1
+scikit-learn==1.0.2
+backtrader==1.9.76.123
+pyfolio-reloaded==0.9.3
 ```
 
 ## Implementation
@@ -18,7 +39,10 @@ The following functionalities are implemented:
 * Live-trading using `python-binance`
 
 ## Note:
-Currently the model is underfitting and thus not profitable upon backtesting.
+When training over about 100 epochs the model is overfitting and is not profitable upon backtesting.
+
+When trainng for less than 100 epochs the model's accuracy is around 53%. Although this is better than a coin-flip it is still not profitable upon backtesting.
+
 Further improvements:
 * Implement some of the functions and features discussed in e.g.
 [Advances in Financial Machine Learning](https://www.amazon.co.jp/Advances-Financial-Machine-Learning-English-ebook/dp/B079KLDW21), written by Marcos Lopez de Prado.
