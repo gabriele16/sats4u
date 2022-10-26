@@ -2,8 +2,9 @@
 
 End-to-end Machine-Learning and Deep-Learning framework to accumulate satoshi's using live-algorithmic trading on binance (1 satoshi is 0.00000001 BTC).
 
-## Running on the Colab Notebook:
+## Running the Colab Notebook:
 
+* Install the Google Drive for Desktop (Google Drive)[https://www.google.com/drive/download/]
 * Clone repository inside your Google Drive directory
 * Open `LSTM-CNN-BitCoin.ipynb` with Google Colab and activate the GPU
 * In the Colab notebook adjust path to your own Google Drive, add binance keys files 
