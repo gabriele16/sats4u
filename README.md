@@ -8,9 +8,26 @@ End-to-end Machine-Learning and Deep-Learning framework to accumulate satoshi's 
 * Open `LSTM-CNN-BitCoin.ipynb` with Google Colab and activate the GPU
 * In the Colab notebook adjust path to your own Google Drive, add binance keys files 
 * Execute the notebook.
-Excute the following command
+
+## Dependencies
+
+The dependencies are listed inside the `requirements.txt` file and can be installed via:
+
 ```
 ! pip install -r requirements.txt
+```
+
+List of dependencies:
+
+```
+python-binance==1.0.16
+mplfinance==0.12.9b0
+tensorflow==2.8.2
+pydot==1.3.0
+graphviz==0.10.1
+scikit-learn==1.0.2
+backtrader==1.9.76.123
+pyfolio-reloaded==0.9.3
 ```
 
 ## Implementation
