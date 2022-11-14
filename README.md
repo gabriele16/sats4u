@@ -42,12 +42,13 @@ The following functionalities are implemented:
 ## Note:
 When training over about 100 epochs the model is overfitting and is not profitable upon backtesting.
 
-When trainng for less than 100 epochs the model's accuracy is around 53%. Although this is better than a coin-flip it is still not profitable upon backtesting.
+When trainng for less than 100 epochs the AUC value on the validation set is around 55%, but the binary-cross-entropy loss is around 0.69. It may be just a coinf-flip. Need to backtest on live data to be fully convinced.
 
-Further improvements:
+## Todo:
 * Implement some of the functions and features discussed in e.g.
 [Advances in Financial Machine Learning](https://www.amazon.co.jp/Advances-Financial-Machine-Learning-English-ebook/dp/B079KLDW21), written by Marcos Lopez de Prado.
 * Implement a Denoising Autoencoder to construct noise-free features, see example in [Jane Street: Supervised Autoencoder MLP
 ](https://www.kaggle.com/code/gogo827jz/jane-street-supervised-autoencoder-mlp/notebook)
 * Implement statistical arbitrage as e.g. reported in [Machine Learning for Algorithmic Trading](https://www.amazon.com/Machine-Learning-Algorithmic-Trading-alternative/dp/1839217715?pf_rd_r=GZH2XZ35GB3BET09PCCA&pf_rd_p=c5b6893a-24f2-4a59-9d4b-aff5065c90ec&pd_rd_r=91a679c7-f069-4a6e-bdbb-a2b3f548f0c8&pd_rd_w=2B0Q0&pd_rd_wg=GMY5S&ref_=pd_gw_ci_mcx_mr_hp_d), by Stephan Jansen.
-
+* Properly test hyperparameters and system parameters, e.g. what candles (1h, 1min, 15min etc.), how many candles to consider,
+* Check performance of short/neutral/long as opposed short/long, where the neutral threshold can be e.g. calculated based on the standard deviation of the log-returns.
