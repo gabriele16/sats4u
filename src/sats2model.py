@@ -195,8 +195,12 @@ class TimeSeries2Model:
             axis=-1)([conv_1, conv_2, conv_3, lstm_time_2])
 
         if self.target == "UpDown":
+            dense_1 = keras.layers.Dense(
+                units=self.lstm_dense_units, activation=keras.activations.swish)(conc)
+            dense_2 = keras.layers.Dense(
+                units=self.lstm_dense_units, activation=keras.activations.swish)(dense_1)            
             output = keras.layers.Dense(
-                units=1, activation=keras.activations.sigmoid)(conc)
+                units=1, activation=keras.activations.sigmoid)(dense_2)
             self.model = keras.Model(
                 inputs=[input_candles, input_time], outputs=output)
             self.model.compile(optimizer=keras.optimizers.Adam(),
