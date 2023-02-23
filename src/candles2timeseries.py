@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import time
 from sklearn.preprocessing import MinMaxScaler
 
-
 def denorm(scaler, candles, values):
 
     example = candles.values[-len(values):, :].copy()
