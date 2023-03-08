@@ -57,6 +57,64 @@ class Candles:
         self.candles["UpperBB"] = self.mean + (2 * self.std_dev)
         self.candles["LowerBB"] = self.mean - (2 * self.std_dev)
 
+    def vma(self, length = 7):
+
+        src = self.candles["Close"]
+        pdmS = pd.Series(len(src)*[np.nan], dtype='float64')
+        mdmS = pd.Series(len(src)*[np.nan], dtype='float64')
+        pdiS = pd.Series(len(src)*[np.nan], dtype='float64')
+        mdiS = pd.Series(len(src)*[np.nan], dtype='float64')
+        iS = pd.Series(len(src)*[np.nan], dtype='float64')
+        vma = pd.Series(len(src)*[np.nan], dtype='float64',name="vma")
+
+        k = 1.0 / length
+        pdm = np.maximum((src - src.shift(1)), 0)
+        mdm = np.maximum((src.shift(1) - src), 0)
+
+        pdmS = pdm.ewm(alpha=k, adjust=False).mean()
+        mdmS = mdm.ewm(alpha=k, adjust=False).mean()
+        s = pdmS + mdmS
+        pdi = pdmS / s
+        mdi = mdmS / s
+        pdiS = pdi.ewm(alpha=k, adjust=False).mean()
+        mdiS = mdi.ewm(alpha=k, adjust=False).mean() 
+        d = np.abs(pdiS - mdiS)
+        s1 = pdiS + mdiS
+        iS = (d / s1).ewm(alpha=k, adjust=False).mean() 
+
+        vI = (iS - iS.rolling(length).min()) / (iS.rolling(length).max() - iS.rolling(length).min())  # Calculate VMA variable factor
+
+        vma = pd.Series(index=src.index,name="vma")
+        prev_vma = 0.0
+        src = src.fillna(method="backfill")
+        vI = vI.fillna(method="backfill")
+        vma[0] = src[0]
+        for i in range(1,len(src)):
+            vma[i] = (1 - k * vI[i]) * prev_vma + k * vI[i] * src[i]
+            prev_vma = vma[i]
+        
+        self.candles = pd.concat([self.candles,vma],axis=1)
+    
+    def ma(self, window = 14):
+
+        ma = pd.Series(self.candles["Close"].rolling(window=window).mean(), 
+                       index=self.candles.index,name="ma" )
+        self.candles = pd.concat([self.candles,ma],axis=1)  
+
+    def vma_col(self):
+
+        vmaC = np.where(self.candles["vma"] > self.candles["vma"].shift(1), 1,
+                        np.where(self.candles["vma"] < self.candles["vma"].shift(1), -1,
+                        np.where(self.candles["vma"] == self.candles["vma"].shift(1), 0, np.nan)))              
+        vmaC = pd.Series(vmaC,index=self.candles.index,name="vmaC")
+
+        self.candles = pd.concat([self.candles, vmaC],axis=1)
+
+    def ma_up_low(self):
+
+        self.candles["ma_up_low"] = -1.*(self.candles["Close"] < self.candles["ma"]*(1-1e-3)) + \
+                                    1.*(self.candles["Close"] > self.candles["ma"]*(1+1e-3))
+
     def price2volratio(self):
 
         self.candles["price2volratio"] = (
@@ -93,6 +151,10 @@ class Candles:
     def buildfeatures(self):
 
         self.bbands()
+        self.vma()
+        self.ma()
+        self.ma_up_low()
+        self.vma_col()
         self.price2volratio()
         self.volacc()
         if self.target == "LogReturns":
@@ -137,3 +199,35 @@ class Candles:
                      price_over_volume_plot, volume_diff_plot],
             title=title,
         )
+
+    def ta_vma_plot(self, in_step = -100, last_step = 0, window = 20):
+
+        title = (
+            f"{self.cryptoname} VMA Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[-1].name)} )'"
+        )
+
+        bollinger_bands_plot = mpf.make_addplot(
+            self.candles[["UpperBB", "LowerBB"]].iloc[in_step:], linestyle="dotted")
+        price_over_volume_plot = mpf.make_addplot(
+            self.candles["price2volratio"].iloc[in_step:], panel=1, color="blue")
+        volume_diff_plot = mpf.make_addplot(
+            self.candles["vol_diff"].iloc[in_step:], panel=2, type="bar", ylabel="Vol.Acc."
+        )
+
+        ma_red_plot = mpf.make_addplot( (((self.candles['Close']+self.candles["Close"])*0.5 \
+                                            < self.candles["ma"]*(1-1e-3))*self.candles["High"]).replace(0.0, np.nan).iloc[in_step:last_step],
+                                type='scatter',markersize=15,marker='o', color='r')
+
+        ma_green_plot = mpf.make_addplot( (((self.candles['Close']+self.candles["Close"])*0.5 \
+                                            > self.candles["ma"]*(1+1e-3))*self.candles["Low"]).replace(0.0, np.nan).iloc[in_step:last_step],
+                                type='scatter',markersize=15,marker='o', color='g')
+
+        vma_plot  = mpf.make_addplot((self.candles['vma']).iloc[in_step:last_step], 
+                                      ylabel='vma', secondary_y=False, width = 1)
+        
+
+        mpf.plot(self.candles.iloc[in_step:last_step], type='candle', 
+                    figratio=(24, 12), style='yahoo',
+                    volume=True,
+                    mav=(window),
+                    addplot=[vma_plot, ma_red_plot, ma_green_plot],title = title)

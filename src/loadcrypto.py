@@ -62,7 +62,9 @@ class CryptoData:
 
     def _binance_api_constants(self):
 
-        self._binsizes = {"1m": 1, "5m": 5, "15m": 15, "1h": 60, "1d": 1440}
+        self._binsizes = {"1m": 1, "5m": 5, "15m": 15, 
+                          "30m":30 ,"1h": 60, "4h":60*4 ,
+                          "1d": 1440}
         self._batch_size = 750
 
     def trade_time_units(self, dt=60, period=15, kline_size="1m", starting_date="1 Mar 2022"):
