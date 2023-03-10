@@ -112,8 +112,8 @@ class Candles:
 
     def ma_up_low(self):
 
-        self.candles["ma_up_low"] = -1.*(self.candles["Close"] < self.candles["ma"]*(1-1e-3)) + \
-                                    1.*(self.candles["Close"] > self.candles["ma"]*(1+1e-3))
+        self.candles["ma_up_low"] = -1.*(self.candles["Close"] < self.candles["ma"]*(1-1e-4)) + \
+                                    1.*(self.candles["Close"] > self.candles["ma"]*(1+1e-4))
 
     def price2volratio(self):
 
@@ -200,7 +200,7 @@ class Candles:
             title=title,
         )
 
-    def ta_vma_plot(self, in_step = -100, last_step = 0, window = 20):
+    def ta_vma_plot(self, in_step = -100, last_step = 0, ma_window = 0):
 
         title = (
             f"{self.cryptoname} VMA Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[-1].name)} )'"
@@ -215,19 +215,24 @@ class Candles:
         )
 
         ma_red_plot = mpf.make_addplot( (((self.candles['Close']+self.candles["Close"])*0.5 \
-                                            < self.candles["ma"]*(1-1e-3))*self.candles["High"]).replace(0.0, np.nan).iloc[in_step:last_step],
+                                            < self.candles["ma"]*(1-1e-4))*self.candles["High"]).replace(0.0, np.nan).iloc[in_step:last_step],
                                 type='scatter',markersize=15,marker='o', color='r')
 
         ma_green_plot = mpf.make_addplot( (((self.candles['Close']+self.candles["Close"])*0.5 \
-                                            > self.candles["ma"]*(1+1e-3))*self.candles["Low"]).replace(0.0, np.nan).iloc[in_step:last_step],
+                                            > self.candles["ma"]*(1+1e-4))*self.candles["Low"]).replace(0.0, np.nan).iloc[in_step:last_step],
                                 type='scatter',markersize=15,marker='o', color='g')
 
         vma_plot  = mpf.make_addplot((self.candles['vma']).iloc[in_step:last_step], 
                                       ylabel='vma', secondary_y=False, width = 1)
         
-
-        mpf.plot(self.candles.iloc[in_step:last_step], type='candle', 
+        if (ma_window > 0):
+            mpf.plot(self.candles.iloc[in_step:last_step], type='candle', 
                     figratio=(24, 12), style='yahoo',
                     volume=True,
-                    mav=(window),
+                    mav=(ma_window),
                     addplot=[vma_plot, ma_red_plot, ma_green_plot],title = title)
+        else:
+            mpf.plot(self.candles.iloc[in_step:last_step], type='candle', 
+                    figratio=(24, 12), style='yahoo',
+                    volume=True,
+                    addplot=[vma_plot, ma_red_plot, ma_green_plot],title = title)            
