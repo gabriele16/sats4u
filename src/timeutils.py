@@ -4,6 +4,8 @@ import os, datetime
 import time
 from datetime import datetime, timedelta
 
+# Use periods = -1 to calculate for labels
+# Use periods = 1 or larger to calculate for features
 def log_return(series, periods=1):
     log_ret = np.log(series).diff(periods=periods)
     if periods < 0:

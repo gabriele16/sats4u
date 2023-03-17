@@ -57,7 +57,7 @@ class Candles:
         self.candles["UpperBB"] = self.mean + (2 * self.std_dev)
         self.candles["LowerBB"] = self.mean - (2 * self.std_dev)
 
-    def vma(self, length = 7):
+    def vma(self, length = 9):
 
         src = self.candles["Close"]
         pdmS = pd.Series(len(src)*[np.nan], dtype='float64')
@@ -95,7 +95,7 @@ class Candles:
         
         self.candles = pd.concat([self.candles,vma],axis=1)
     
-    def ma(self, window = 14):
+    def ma(self, window = 31):
 
         ma = pd.Series(self.candles["Close"].rolling(window=window).mean(), 
                        index=self.candles.index,name="ma" )
@@ -128,13 +128,14 @@ class Candles:
     def logreturns(self, colname="Close"):
 
         self.candles["LogReturns"] = tu.log_return(
-            self.candles[colname], periods=1)
+            self.candles[colname], periods=-1)
 
     def updowns(self, colname="Close"):
 
-        self.candles["UpDown"] = self.candles["Close"].diff(periods=1).apply(
-            lambda x: 1. if x > 0 else 0.)
-
+        # use periods = -1. for labels, and multiply by -1 because of diff()
+        self.candles["UpDown"] =  (-1.*self.candles["Close"].diff(-1)).apply(
+            lambda x: np.nan if np.isnan(x) else 1. if x > 0. else 0.)
+        
     def switch2lastcol(self, colname="Close"):
 
         if self.candles.columns[-1] != colname:
@@ -162,7 +163,7 @@ class Candles:
         elif self.target == "UpDown":
             self.updowns()
         self.candles = self.candles.iloc[self.rollwindow:]
-        self.candles.fillna(method="pad", inplace=True)
+#        self.candles.fillna(method="pad", inplace=True)
         self.switch2lastcol(colname=self.target)
 
     def ta_plot(self, in_step=-100):
