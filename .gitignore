@@ -24,3 +24,6 @@ share/python-wheels/
 MANIFEST
 *png*
 bt_log.csv
+*.joblib
+*score*.txt
+data/ETHUSDT-5m-data.csv
