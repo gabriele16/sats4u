@@ -7,6 +7,7 @@ import time
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 from sklearn.preprocessing import MinMaxScaler
+import plotly.graph_objects as go
 
 
 class Candles:
@@ -207,14 +208,6 @@ class Candles:
             f"{self.cryptoname} VMA Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[-1].name)} )'"
         )
 
-        bollinger_bands_plot = mpf.make_addplot(
-            self.candles[["UpperBB", "LowerBB"]].iloc[in_step:], linestyle="dotted")
-        price_over_volume_plot = mpf.make_addplot(
-            self.candles["price2volratio"].iloc[in_step:], panel=1, color="blue")
-        volume_diff_plot = mpf.make_addplot(
-            self.candles["vol_diff"].iloc[in_step:], panel=2, type="bar", ylabel="Vol.Acc."
-        )
-
         ma_red_plot = mpf.make_addplot( (((self.candles['Close']+self.candles["Close"])*0.5 \
                                             < self.candles["ma"]*(1-1e-4))*self.candles["High"]).replace(0.0, np.nan).iloc[in_step:last_step],
                                 type='scatter',markersize=15,marker='o', color='r')
@@ -236,4 +229,41 @@ class Candles:
             mpf.plot(self.candles.iloc[in_step:last_step], type='candle', 
                     figratio=(24, 12), style='yahoo',
                     volume=True,
-                    addplot=[vma_plot, ma_red_plot, ma_green_plot],title = title)            
+                    addplot=[vma_plot, ma_red_plot, ma_green_plot],title = title)  
+
+    def ta_vma_plotly(self, in_step=-100, last_step=0):
+        title = f"{self.cryptoname} VMA Chart ({str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[-1].name)})"
+
+        candlestick = go.Candlestick(x=self.candles.index[in_step:last_step],
+                                    open=self.candles['Open'].iloc[in_step:last_step],
+                                    high=self.candles['High'].iloc[in_step:last_step],
+                                    low=self.candles['Low'].iloc[in_step:last_step],
+                                    close=self.candles['Close'].iloc[in_step:last_step],
+                                    increasing=dict(line=dict(color='green')),
+                                    decreasing=dict(line=dict(color='red')))
+
+        ma_red_scatter = go.Scatter(x=self.candles.index[in_step:last_step],
+                                    y=self.candles["High"].iloc[in_step:last_step].where(
+                                        (self.candles['Close'] + self.candles["Close"]) * 0.5 <
+                                        self.candles["ma"] * (1 - 1e-4)).replace(0.0, float('nan')),
+                                    mode='markers',
+                                    marker=dict(color='red', size=8, symbol='circle'))
+
+        ma_green_scatter = go.Scatter(x=self.candles.index[in_step:last_step],
+                                    y=self.candles["Low"].iloc[in_step:last_step].where(
+                                        (self.candles['Close'] + self.candles["Close"]) * 0.5 >
+                                        self.candles["ma"] * (1 + 1e-4)).replace(0.0, float('nan')),
+                                    mode='markers',
+                                    marker=dict(color='green', size=8, symbol='circle'))
+
+        vma_line = go.Scatter(x=self.candles.index[in_step:last_step],
+                            y=self.candles['vma'].iloc[in_step:last_step],
+                            mode='lines',
+                            name='VMA')
+
+        add_plots = [candlestick, ma_red_scatter, ma_green_scatter, vma_line]
+
+        layout = go.Layout(title=title, yaxis=dict(domain=[0.15, 1]))
+        fig = go.Figure(data=add_plots, layout=layout)
+
+        return fig
