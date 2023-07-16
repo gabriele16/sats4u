@@ -24,7 +24,10 @@ import featbuild as fb
 
 def main():
 
-    server_location = st.selectbox("Is the server physically located in the US?", ("Yes", "No"))
+    server_location = st.selectbox("Is the server in the US?", ("Yes", "No"))
+    crypto_pair = st.selectbox("Which crypto pairs do you want to analyse", ("BTCUSDT", "ETHUSDT", "LTCUSDT"))
+
+    crypto_pair_dict = {"BTCUSDT": "Bitcoin", "ETHUSDT": "Ethereum", "LTCUSDT": "Litecoin"}
 
     # Check the selected value
     if server_location == "Yes":
@@ -42,8 +45,8 @@ def main():
     if api_key and api_secret:
         # Use the API key to download live prices from Binance
         # Your code to download live prices using the API key goes here
-        st.write(f"Using API key : {api_key}")
-        st.write(f"Using API secret: {api_secret}")
+        # st.write(f"Using API key : {api_key}")
+        # st.write(f"Using API secret: {api_secret}")
 
         initial_step = -170
         final_step = -1
@@ -59,9 +62,9 @@ def main():
         crypto.trade_time_units(dt=60,kline_size="1d",period=60*24,starting_date = '1 Mar 2017')
 
         tickers=crypto.asset_details["Ticker"]
-        tickers = list(tickers[tickers=='BTCUSDT'].values)
+        tickers = list(tickers[tickers==crypto_pair].values)
         ldata_df = crypto.load_cryptos(tickers,save = False)
-        crypto_name = "Bitcoin"
+        crypto_name = crypto_pair_dict[crypto_pair]
         target = "UpDown"
         crypto = fb.Candles(ldata_df,crypto_name, target = target)
         crypto.buildfeatures()
