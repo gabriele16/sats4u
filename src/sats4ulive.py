@@ -58,7 +58,7 @@ def main():
         #secret_data_folder = os.path.join(root_dir, "crypto_data")
     #    secrets_filename = os.path.join(secret_data_folder, "data.json")
         crypto = lc.CryptoData(asset_details,data_folder)
-        crypto.set_binance_api_keys( api_key, api_secret, server_location = 'US')
+        crypto.set_binance_api_keys( api_key, api_secret, server_location = server_location)
     #    crypto.load_binance_client(secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i')
         crypto.trade_time_units(dt=60,kline_size="1d",period=60*24,starting_date = '1 Mar 2017')
 
