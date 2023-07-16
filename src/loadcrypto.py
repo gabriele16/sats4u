@@ -97,11 +97,17 @@ class CryptoData:
         self.binance_client = Client(
             self._binance_api_key, self._binance_api_secret, testnet=testnet)
     
-    def set_binance_api_keys(self, api_key, api_secret):
+    def set_binance_api_keys(self, api_key, api_secret, server_location = 'not-US'):
         self._binance_api_key = api_key
         self._binance_api_secret = api_secret
-        self.binance_client = Client(
-            self._binance_api_key, self._binance_api_secret)
+        if server_location == 'US':
+            self.binance_client = Client(
+                self._binance_api_key, self._binance_api_secret, tld='us' )
+        elif server_location == 'not-US':
+            self.binance_client = Client(
+                self._binance_api_key, self._binance_api_secret)
+        else:
+            raise ValueError('server_location must be either US or not-US')
 
     # FUNCTIONS
     def _minutes_of_new_data(self, symbol, data, source):

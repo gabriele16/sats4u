@@ -24,6 +24,16 @@ import featbuild as fb
 
 def main():
 
+    server_location = st.selectbox("Is the server physically located in the US?", ("Yes", "No"))
+
+    # Check the selected value
+    if server_location == "Yes":
+        st.write("The server is physically located in the US")
+        server_location = "US"
+    elif server_location == "No":
+        st.write("The server is not physically located in the US")
+        server_location = "not-US"
+    
     # Create a search bar for the API key
     api_key = st.text_input("Enter your Binance API Key without being seen", type = "password")
     api_secret = st.text_input("Enter your Binance API Secret without being seen", type = "password")
@@ -48,7 +58,7 @@ def main():
         #secret_data_folder = os.path.join(root_dir, "crypto_data")
     #    secrets_filename = os.path.join(secret_data_folder, "data.json")
         crypto = lc.CryptoData(asset_details,data_folder)
-        crypto.set_binance_api_keys( api_key, api_secret)
+        crypto.set_binance_api_keys( api_key, api_secret, server_location = 'US')
     #    crypto.load_binance_client(secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i')
         crypto.trade_time_units(dt=60,kline_size="1d",period=60*24,starting_date = '1 Mar 2017')
 
