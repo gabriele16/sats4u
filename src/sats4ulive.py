@@ -25,14 +25,14 @@ import featbuild as fb
 def main():
 
     # Create a search bar for the API key
-    api_key = st.text_input("Enter your Binance API Key without being seen")
-    api_secret = st.text_input("Enter your Binance API Key without being seen")
+    api_key = st.text_input("Enter your Binance API Key without being seen", type = "password")
+    api_secret = st.text_input("Enter your Binance API Secret without being seen", type = "password")
 
     # Check if the API key is provided
     if api_key and api_secret:
         # Use the API key to download live prices from Binance
         # Your code to download live prices using the API key goes here
-        st.write(f"Using API key 1: {api_key}")
+        st.write(f"Using API key : {api_key}")
         st.write(f"Using API secret: {api_secret}")
 
     initial_step = -170
