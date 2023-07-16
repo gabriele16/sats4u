@@ -96,6 +96,12 @@ class CryptoData:
         self._binance_api_secret = api_keys[data2_str]
         self.binance_client = Client(
             self._binance_api_key, self._binance_api_secret, testnet=testnet)
+    
+    def set_binance_api_keys(self, api_key, api_secret):
+        self._binance_api_key = api_key
+        self._binance_api_secret = api_secret
+        self.binance_client = Client(
+            self._binance_api_key, self._binance_api_secret)
 
     # FUNCTIONS
     def _minutes_of_new_data(self, symbol, data, source):

@@ -62,8 +62,6 @@ def main():
 
     fig = crypto.ta_vma_plotly(in_step=initial_step, last_step=final_step)
 
-    st.plotly_chart(fig)
-
     while True:
         # Retrieve new data and update the chart
         # Your code for retrieving new data and updating the chart here
