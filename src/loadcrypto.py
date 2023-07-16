@@ -5,7 +5,7 @@ import os
 import datetime
 import time
 from datetime import datetime, timedelta
-import src.timeutils as tu
+import timeutils as tu
 
 # import warnings
 # warnings.filterwarnings('ignore')
