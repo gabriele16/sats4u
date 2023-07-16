@@ -222,7 +222,8 @@ class CryptoData:
         if len(data_df) > 0:
             temp_df = pd.DataFrame(data)
             temp_df = temp_df.rename(columns=renamed_cols).copy()
-            data_df = data_df.append(temp_df)
+#            data_df = data_df.append(temp_df) this is outdated. use concat instead
+            data_df = pd.concat([data_df, temp_df])
         else:
             data_df = data
             data_df = data_df.rename(columns=renamed_cols).copy()
