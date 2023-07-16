@@ -260,10 +260,26 @@ class Candles:
                             y=self.candles['vma'].iloc[in_step:last_step],
                             mode='lines',
                             name='VMA')
+        
+        # vma_line = go.Scatter(x=self.candles.index[in_step:last_step],
+        #                     y=self.candles['vma'].iloc[in_step:last_step].where(
+        #                         ~self.candles['vma'].iloc[in_step:last_step].duplicated(keep=False),
+        #                         np.nan),
+        #                     mode='lines',
+        #                     name='VMA',
+        #                     line=dict(color='purple'))
 
-        add_plots = [candlestick, ma_red_scatter, ma_green_scatter, vma_line]
+        vma_line_gold = go.Scatter(x=self.candles.index[in_step:last_step],
+                                y=self.candles['vma'].iloc[in_step:last_step].where(
+                                    self.candles['vma'].iloc[in_step:last_step].duplicated(keep=False),
+                                    np.nan),
+                                mode='lines',
+                                name='Track line',
+                                line=dict(color='gold', width=3))
 
-        layout = go.Layout(title=title, yaxis=dict(domain=[0.15, 1]))
+        add_plots = [candlestick, ma_red_scatter, ma_green_scatter, vma_line, vma_line_gold]
+
+        layout = go.Layout(title=title, yaxis=dict(domain=[0.15, 1]), height=600, width=1000)
         fig = go.Figure(data=add_plots, layout=layout)
 
         return fig
