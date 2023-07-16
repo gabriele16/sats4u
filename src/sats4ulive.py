@@ -20,28 +20,36 @@ from streamlit import cli as stcli
 
 import loadcrypto as lc
 import featbuild as fb
-import candles2timeseries as c2t
-import sats2model as s2m
-import timeutils as tu
-import sats2backtest as s2b
 
 
 def main():
 
+    # Create a search bar for the API key
+    api_key = st.text_input("Enter your Binance API Key without being seen")
+    api_secret = st.text_input("Enter your Binance API Key without being seen")
+
+    # Check if the API key is provided
+    if api_key and api_secret:
+        # Use the API key to download live prices from Binance
+        # Your code to download live prices using the API key goes here
+        st.write(f"Using API key 1: {api_key}")
+        st.write(f"Using API secret: {api_secret}")
+
     initial_step = -170
     final_step = -1
-    st.title("Real-time Bitcoin Price Chart")
+    st.title("Real-time Chart")
     st.write("Updating every 15 minutes...")
 
     root_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.join(root_dir, "..")
     data_folder = os.path.join(root_dir, "data") 
     asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
-    secret_data_folder = '/Users/gabrieletocci/Google Drive/My Drive/Colab Notebooks/crypto_project/crypto_data'
+#    secret_data_folder = '/Users/gabrieletocci/Google Drive/My Drive/Colab Notebooks/crypto_project/crypto_data'
     #secret_data_folder = os.path.join(root_dir, "crypto_data")
-    secrets_filename = os.path.join(secret_data_folder, "data.json")
+#    secrets_filename = os.path.join(secret_data_folder, "data.json")
     crypto = lc.CryptoData(asset_details,data_folder)
-    crypto.load_binance_client(secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i')
+    crypto.set_binance_api_keys( api_key, api_secret)
+#    crypto.load_binance_client(secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i')
     crypto.trade_time_units(dt=60,kline_size="1d",period=60*24,starting_date = '1 Mar 2017')
 
     tickers=crypto.asset_details["Ticker"]
