@@ -54,17 +54,13 @@ def main():
         root_dir = os.path.join(root_dir, "..")
         data_folder = os.path.join(root_dir, "data") 
         asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
-    #    secret_data_folder = '/Users/gabrieletocci/Google Drive/My Drive/Colab Notebooks/crypto_project/crypto_data'
-        #secret_data_folder = os.path.join(root_dir, "crypto_data")
-    #    secrets_filename = os.path.join(secret_data_folder, "data.json")
         crypto = lc.CryptoData(asset_details,data_folder)
         crypto.set_binance_api_keys( api_key, api_secret, server_location = server_location)
-    #    crypto.load_binance_client(secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i')
         crypto.trade_time_units(dt=60,kline_size="1d",period=60*24,starting_date = '1 Mar 2017')
 
         tickers=crypto.asset_details["Ticker"]
         tickers = list(tickers[tickers=='BTCUSDT'].values)
-        ldata_df = crypto.load_cryptos(tickers,save = True)
+        ldata_df = crypto.load_cryptos(tickers,save = False)
         crypto_name = "Bitcoin"
         target = "UpDown"
         crypto = fb.Candles(ldata_df,crypto_name, target = target)
