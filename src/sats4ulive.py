@@ -14,15 +14,16 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import seaborn as sns
 import mplfinance as mpf
-import src.loadcrypto as lc
-import src.featbuild as fb
-import src.candles2timeseries as c2t
-import src.sats2model as s2m
-import src.timeutils as tu
-import src.sats2backtest as s2b
+import path
 import sys
 from streamlit import cli as stcli
 
+import loadcrypto as lc
+import featbuild as fb
+import candles2timeseries as c2t
+import sats2model as s2m
+import timeutils as tu
+import sats2backtest as s2b
 
 
 def main():
