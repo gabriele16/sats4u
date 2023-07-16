@@ -35,44 +35,44 @@ def main():
         st.write(f"Using API key : {api_key}")
         st.write(f"Using API secret: {api_secret}")
 
-    initial_step = -170
-    final_step = -1
-    st.title("Real-time Chart")
-    st.write("Updating every 15 minutes...")
+        initial_step = -170
+        final_step = -1
+        st.title("Real-time Chart")
+        st.write("Updating every 15 minutes...")
 
-    root_dir = os.path.dirname(os.path.abspath(__file__))
-    root_dir = os.path.join(root_dir, "..")
-    data_folder = os.path.join(root_dir, "data") 
-    asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
-#    secret_data_folder = '/Users/gabrieletocci/Google Drive/My Drive/Colab Notebooks/crypto_project/crypto_data'
-    #secret_data_folder = os.path.join(root_dir, "crypto_data")
-#    secrets_filename = os.path.join(secret_data_folder, "data.json")
-    crypto = lc.CryptoData(asset_details,data_folder)
-    crypto.set_binance_api_keys( api_key, api_secret)
-#    crypto.load_binance_client(secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i')
-    crypto.trade_time_units(dt=60,kline_size="1d",period=60*24,starting_date = '1 Mar 2017')
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        root_dir = os.path.join(root_dir, "..")
+        data_folder = os.path.join(root_dir, "data") 
+        asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
+    #    secret_data_folder = '/Users/gabrieletocci/Google Drive/My Drive/Colab Notebooks/crypto_project/crypto_data'
+        #secret_data_folder = os.path.join(root_dir, "crypto_data")
+    #    secrets_filename = os.path.join(secret_data_folder, "data.json")
+        crypto = lc.CryptoData(asset_details,data_folder)
+        crypto.set_binance_api_keys( api_key, api_secret)
+    #    crypto.load_binance_client(secrets_filename,data1_str = 'DATA1',data2_str = 'DATA2i')
+        crypto.trade_time_units(dt=60,kline_size="1d",period=60*24,starting_date = '1 Mar 2017')
 
-    tickers=crypto.asset_details["Ticker"]
-    tickers = list(tickers[tickers=='BTCUSDT'].values)
-    ldata_df = crypto.load_cryptos(tickers,save = True)
-    crypto_name = "Bitcoin"
-    target = "UpDown"
-    crypto = fb.Candles(ldata_df,crypto_name, target = target)
-    crypto.buildfeatures()
+        tickers=crypto.asset_details["Ticker"]
+        tickers = list(tickers[tickers=='BTCUSDT'].values)
+        ldata_df = crypto.load_cryptos(tickers,save = True)
+        crypto_name = "Bitcoin"
+        target = "UpDown"
+        crypto = fb.Candles(ldata_df,crypto_name, target = target)
+        crypto.buildfeatures()
 
-    fig = crypto.ta_vma_plotly(in_step=initial_step, last_step=final_step)
+        fig = crypto.ta_vma_plotly(in_step=initial_step, last_step=final_step)
 
-    while True:
-        # Retrieve new data and update the chart
-        # Your code for retrieving new data and updating the chart here
-        
-        # Update the chart with the new data
-        # Modify the 'fig' object accordingly
-        
-        st.plotly_chart(fig)
+        while True:
+            # Retrieve new data and update the chart
+            # Your code for retrieving new data and updating the chart here
+            
+            # Update the chart with the new data
+            # Modify the 'fig' object accordingly
+            
+            st.plotly_chart(fig)
 
-        # Wait for 15 minutes before the next update
-        time.sleep(15 * 60)    
+            # Wait for 15 minutes before the next update
+            time.sleep(15 * 60)    
 
 # Run the streamlit app
 # streamlit run src/sats4ulive.py    
