@@ -179,10 +179,13 @@ class Candles:
     def ta_fullplot(self, in_step=-100, last_step = 0):
 
         if last_step == 0:
-            last_step = len(self.candles)        
+            last_step = len(self.candles)
+            last_step_vis = -1
+        else:
+            last_step_vis = last_step
 
         title = (
-            f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step].name)} )'"
+            f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step_vis].name)} )'"
         )
 
         bollinger_bands_plot = mpf.make_addplot(
@@ -209,9 +212,12 @@ class Candles:
 
         if last_step == 0:
             last_step = len(self.candles)
+            last_step_vis = -1
+        else:
+            last_step_vis = last_step
 
         title = (
-            f"{self.cryptoname} VMA Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step].name)} )'"
+            f"{self.cryptoname} VMA Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step_vis].name)} )'"
         )
 
         ma_red_plot = mpf.make_addplot( (((self.candles['Close']+self.candles["Close"])*0.5 \
@@ -241,8 +247,11 @@ class Candles:
 
         if last_step == 0:
             last_step = len(self.candles)
+            last_step_vis = -1
+        else:
+            last_step_vis = last_step
 
-        title = f"{self.cryptoname} VMA Chart ({str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step].name)})"
+        title = f"{self.cryptoname} VMA Chart ({str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step_vis].name)})"
 
         candlestick = go.Candlestick(x=self.candles.index[in_step:last_step],
                                     open=self.candles['Open'].iloc[in_step:last_step],
