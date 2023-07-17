@@ -266,14 +266,14 @@ class Candles:
                                         (self.candles['Close'] + self.candles["Close"]) * 0.5 <
                                         self.candles["ma"] * (1 - 1e-4)).replace(0.0, float('nan')),
                                     mode='markers',
-                                    marker=dict(color='red', size=8, symbol='circle'))
+                                    marker=dict(color='red', size=7, symbol='circle'))
 
         ma_green_scatter = go.Scatter(x=self.candles.index[in_step:last_step],
-                                    y=self.candles["Low"].iloc[in_step:last_step].where(
+                                    y=(self.candles["Low"].iloc[in_step:last_step]).where(
                                         (self.candles['Close'] + self.candles["Close"]) * 0.5 >
                                         self.candles["ma"] * (1 + 1e-4)).replace(0.0, float('nan')),
                                     mode='markers',
-                                    marker=dict(color='green', size=8, symbol='circle'))
+                                    marker=dict(color='green', size=7, symbol='circle'))
 
         vma_line = go.Scatter(x=self.candles.index[in_step:last_step],
                             y=self.candles['vma'].iloc[in_step:last_step],
