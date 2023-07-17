@@ -21,7 +21,7 @@ from streamlit import cli as stcli
 import loadcrypto as lc
 import featbuild as fb
 
-@st.cachex
+@st.cache
 def get_data_and_plot(ldata_df, crypto_name, initial_step, final_step):
 
     target = "UpDown"
