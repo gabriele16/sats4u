@@ -64,7 +64,7 @@ def main():
         initial_step = -300
         final_step = 0
         st.title("Real-time Chart")
-        st.write("Updating every 1 minutes...")
+        st.write(f"Updating every {time_frames_dict[time_frame]} minutes...")
 
         root_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.join(root_dir, "..")
@@ -79,11 +79,11 @@ def main():
         tickers = list(tickers[tickers==crypto_pair].values)
         ldata_df = crypto.load_cryptos(tickers,save = True)
         crypto_name = crypto_pair_dict[crypto_pair]
-        # target = "UpDown"
-        # candles = fb.Candles(ldata_df,crypto_name, target = target)
-        # candles.buildfeatures()
-        # fig = candles.ta_vma_plotly(in_step=initial_step, last_step=final_step)
-        fig = get_data_and_plot(ldata_df, crypto_name, initial_step, final_step)
+        target = "UpDown"
+        candles = fb.Candles(ldata_df,crypto_name, target = target)
+        candles.buildfeatures()
+        fig = candles.ta_vma_plotly(in_step=initial_step, last_step=final_step)
+    #    fig = get_data_and_plot(ldata_df, crypto_name, initial_step, final_step)
 
         while True:
             # Retrieve new data and update the chart
