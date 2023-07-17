@@ -95,7 +95,7 @@ def main():
             st.plotly_chart(fig)
 
             # Wait for 15 minutes before the next update
-            time.sleep(1)    
+            time.sleep( time_frames_dict[time_frame] * 60)    
 
 # Run the streamlit app
 # streamlit run src/sats4ulive.py    
