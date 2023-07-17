@@ -6,23 +6,13 @@ import datetime
 import time
 from datetime import datetime, timedelta
 import timeutils as tu
-
-# import warnings
-# warnings.filterwarnings('ignore')
-
-
 from binance import BinanceSocketManager
 from binance import ThreadedWebsocketManager
 from binance.exceptions import BinanceAPIException  # here
 from binance.client import Client
 from dateutil import parser
-
 from pathlib import Path
-
-# from warnings import simplefilter
-
 from tqdm import tqdm
-
 import traceback
 import json
 
@@ -64,7 +54,7 @@ class CryptoData:
 
         self._binsizes = {"1m": 1, "5m": 5, "15m": 15, 
                           "30m":30 ,"1h": 60, "4h":60*4 ,
-                          "1d": 1440}
+                          "1d": 60*24}
         self._batch_size = 750
 
     def trade_time_units(self, dt=60, period=15, kline_size="1m", starting_date="1 Mar 2022"):
