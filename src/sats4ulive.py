@@ -16,6 +16,7 @@ import seaborn as sns
 import mplfinance as mpf
 import path
 import sys
+from IPython.display import display
 from streamlit import cli as stcli
 
 import loadcrypto as lc
@@ -28,7 +29,14 @@ def get_data_and_plot(ldata_df, crypto_name, initial_step, final_step):
     candles = fb.Candles(ldata_df,crypto_name, target = target)
     candles.buildfeatures()
     fig = candles.ta_vma_plotly(in_step=initial_step, last_step=final_step)
+    
     return fig
+
+@st.cache 
+def get_dataframe(crypto_obj, tickers):
+
+    ldata_df = crypto_obj.load_cryptos(tickers,save = False)
+    return ldata_df
 
 def main():
     
@@ -77,12 +85,14 @@ def main():
 
         tickers=crypto.asset_details["Ticker"]
         tickers = list(tickers[tickers==crypto_pair].values)
-        ldata_df = crypto.load_cryptos(tickers,save = True)
+#        ldata_df = crypto.load_cryptos(tickers,save = False)
+        ldata_df = get_dataframe(crypto, tickers)
         crypto_name = crypto_pair_dict[crypto_pair]
         target = "UpDown"
         candles = fb.Candles(ldata_df,crypto_name, target = target)
+        display(candles.candles)
         candles.buildfeatures()
-        fig = candles.ta_vma_plotly(in_step=initial_step, last_step=final_step)
+        fig = candles.ta_vma_plotly(in_step=initial_step, last_step=0)
     #    fig = get_data_and_plot(ldata_df, crypto_name, initial_step, final_step)
 
         while True:

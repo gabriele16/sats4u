@@ -176,22 +176,25 @@ class Candles:
         mpf.plot(self.candles.iloc[in_step:], type="candle", volume=True, figratio=(
             24, 12), style="yahoo", title=title)
 
-    def ta_fullplot(self, in_step=-100):
+    def ta_fullplot(self, in_step=-100, last_step = 0):
+
+        if last_step == 0:
+            last_step = len(self.candles)        
 
         title = (
-            f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[-1].name)} )'"
+            f"{self.cryptoname} Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step].name)} )'"
         )
 
         bollinger_bands_plot = mpf.make_addplot(
-            self.candles[["UpperBB", "LowerBB"]].iloc[in_step:], linestyle="dotted")
+            self.candles[["UpperBB", "LowerBB"]].iloc[in_step:last_step], linestyle="dotted")
         price_over_volume_plot = mpf.make_addplot(
-            self.candles["price2volratio"].iloc[in_step:], panel=1, color="blue")
+            self.candles["price2volratio"].iloc[in_step:last_step], panel=1, color="blue")
         volume_diff_plot = mpf.make_addplot(
-            self.candles["vol_diff"].iloc[in_step:], panel=2, type="bar", ylabel="Vol.Acc."
+            self.candles["vol_diff"].iloc[in_step:last_step], panel=2, type="bar", ylabel="Vol.Acc."
         )
 
         mpf.plot(
-            self.candles.iloc[in_step:],
+            self.candles.iloc[in_step:last_step],
             type="candle",
             volume=True,
             mav=(3, 11),
@@ -204,8 +207,11 @@ class Candles:
 
     def ta_vma_plot(self, in_step = -100, last_step = 0, ma_window = 0):
 
+        if last_step == 0:
+            last_step = len(self.candles)
+
         title = (
-            f"{self.cryptoname} VMA Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[-1].name)} )'"
+            f"{self.cryptoname} VMA Chart ( {str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step].name)} )'"
         )
 
         ma_red_plot = mpf.make_addplot( (((self.candles['Close']+self.candles["Close"])*0.5 \
