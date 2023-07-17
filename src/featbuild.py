@@ -238,7 +238,11 @@ class Candles:
                     addplot=[vma_plot, ma_red_plot, ma_green_plot],title = title)  
 
     def ta_vma_plotly(self, in_step=-100, last_step=0):
-        title = f"{self.cryptoname} VMA Chart ({str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[-1].name)})"
+
+        if last_step == 0:
+            last_step = len(self.candles)
+
+        title = f"{self.cryptoname} VMA Chart ({str(self.candles.iloc[in_step].name)} - {str(self.candles.iloc[last_step].name)})"
 
         candlestick = go.Candlestick(x=self.candles.index[in_step:last_step],
                                     open=self.candles['Open'].iloc[in_step:last_step],
