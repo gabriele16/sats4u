@@ -58,8 +58,8 @@ def main():
         st.write("The server is not physically located in the US")
         server_location = "not-US"
 
-    time_frames_dict = {"1m": 1, "5m": 5, "15m": 15, "30m":30 ,
-                        "1h": 60, "4h":60*4 ,"1d": 60*24}
+    time_frames_dict = {"1d": 60*24, "4h":60*4, "1h": 60, "30m":30 ,
+                        "15m": 15,"5m": 5,"1m": 1}
     time_frame = st.selectbox("Select time-frame", time_frames_dict.keys())
     
     # Create a search bar for the API key
