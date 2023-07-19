@@ -13,10 +13,9 @@ import mplfinance as mpf
 import path
 import sys
 from streamlit import cli as stcli
-
 import loadcrypto as lc
 import featbuild as fb
-
+from src import timeutils as tu
 
 crypto_pair_dict = {
     "BTCUSDT": "Bitcoin",
@@ -63,11 +62,6 @@ def main():
         time_frame = st.selectbox("Select time-frame", time_frames_dict.keys())
         update_interval = time_frames_dict[time_frame] * 60/2 
 
-        initial_step = st.number_input('Select how many candle-sticks to visualize up to now',
-                                       min_value=10,
-                                       max_value=600, value=100, step=1)
-        initial_step = -initial_step
-
     rerun_button = st.button("Run App")
 
     # Create a search bar for the API key
@@ -88,27 +82,37 @@ def main():
         tickers = crypto.asset_details["Ticker"]
         tickers = list(tickers[tickers == crypto_pair].values)
 
-        ldata_df = get_dataframe(crypto, tickers)
+        ldata_df = get_dataframe(crypto, tickers) 
         crypto_name = crypto_pair_dict[crypto_pair]
         target = "UpDown"
         candles = fb.Candles(ldata_df, crypto_name, target=target)
+
+        # Get the minimum and maximum dates from the dataframe
+        min_date = tu.todatetime(ldata_df.index.min()).date()
+        max_date = tu.todatetime(ldata_df.index.max()).date()
+
+        # Set the initial range values
+        default_start_date = tu.todatetime(ldata_df.index[-200]).date()
+        default_end_date = tu.todatetime(ldata_df.index[-1]).date()
+
+        # Time range slider
+        start_date, end_date = st.slider("Select date range", min_value=min_date, max_value=max_date,
+                                         value=(default_start_date, default_end_date))
+        
         candles.buildfeatures()
+        fig_vma = candles.ta_vma_plotly(start_date, end_date)
+        fig_full = candles.ta_fullplot_plotly(start_date, end_date)
 
-        fig_vma = candles.ta_vma_plotly(in_step=initial_step, last_step=0)
-        fig_full = candles.ta_fullplot_plotly(in_step=initial_step, last_step=0)
+        chart_placeholder_vma = st.empty()
+        chart_placeholder_vma.plotly_chart(fig_vma)
 
-        # chart_placeholder_vma = st.empty()
-        # chart_placeholder_vma.plotly_chart(fig_vma)
-
-        # chart_placeholder_full = st.empty()
-        # chart_placeholder_full.plotly_chart(fig_full)
+        chart_placeholder_full = st.empty()
+        chart_placeholder_full.plotly_chart(fig_full)
 
         # Timer variables
         last_update_time = time.time()
 
         iteration = 0
-        # Store the current range of the range slider
-        x_range = None
 
         while rerun_button or time.time() - last_update_time <= update_interval:
             last_update_time = time.time()
@@ -118,27 +122,11 @@ def main():
             crypto_name = crypto_pair_dict[crypto_pair]
             candles = fb.Candles(ldata_df, crypto_name, target=target)
             candles.buildfeatures()
-            fig_vma = candles.ta_vma_plotly(in_step=initial_step, last_step=0)
-            fig_full = candles.ta_fullplot_plotly(in_step=initial_step, last_step=0)
+            fig_vma = candles.ta_vma_plotly(start_date, end_date)
+            fig_full = candles.ta_fullplot_plotly(start_date, end_date)
 
-            # Update the chart placeholder with the new figure
-            if x_range is not None:
-                try:
-                    fig_vma.update_layout(xaxis_range=x_range)
-                except KeyError:
-                    pass
-
-            # chart_placeholder_vma.plotly_chart(fig_vma)
-            # chart_placeholder_full.plotly_chart(fig_full)
-            st.plotly_chart(fig_vma)
-            st.plotly_chart(fig_full)
-
-            # Store the current range of the range slider
-            try:
-                x_range = fig_vma["layout"]["xaxis"]["range"]
-#                x_range = [fig_vma["layout"]["xaxis"]["range"][0], fig_vma["layout"]["xaxis"]["range"][1]]
-            except TypeError:
-                x_range = None
+            chart_placeholder_vma.plotly_chart(fig_vma)
+            chart_placeholder_full.plotly_chart(fig_full)
 
 if __name__ == '__main__':
     main()
