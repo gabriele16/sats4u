@@ -97,16 +97,18 @@ def main():
         fig_vma = candles.ta_vma_plotly(in_step=initial_step, last_step=0)
         fig_full = candles.ta_fullplot_plotly(in_step=initial_step, last_step=0)
 
-        chart_placeholder_vma = st.empty()
-        chart_placeholder_vma.plotly_chart(fig_vma)
+        # chart_placeholder_vma = st.empty()
+        # chart_placeholder_vma.plotly_chart(fig_vma)
 
-        chart_placeholder_full = st.empty()
-        chart_placeholder_full.plotly_chart(fig_full)
+        # chart_placeholder_full = st.empty()
+        # chart_placeholder_full.plotly_chart(fig_full)
 
         # Timer variables
         last_update_time = time.time()
 
         iteration = 0
+        # Store the current range of the range slider
+        x_range = None
 
         while rerun_button or time.time() - last_update_time <= update_interval:
             last_update_time = time.time()
@@ -120,8 +122,23 @@ def main():
             fig_full = candles.ta_fullplot_plotly(in_step=initial_step, last_step=0)
 
             # Update the chart placeholder with the new figure
-            chart_placeholder_vma.plotly_chart(fig_vma)
-            chart_placeholder_full.plotly_chart(fig_full)
+            if x_range is not None:
+                try:
+                    fig_vma.update_layout(xaxis_range=x_range)
+                except KeyError:
+                    pass
+
+            # chart_placeholder_vma.plotly_chart(fig_vma)
+            # chart_placeholder_full.plotly_chart(fig_full)
+            st.plotly_chart(fig_vma)
+            st.plotly_chart(fig_full)
+
+            # Store the current range of the range slider
+            try:
+                x_range = fig_vma["layout"]["xaxis"]["range"]
+#                x_range = [fig_vma["layout"]["xaxis"]["range"][0], fig_vma["layout"]["xaxis"]["range"][1]]
+            except TypeError:
+                x_range = None
 
 if __name__ == '__main__':
     main()
