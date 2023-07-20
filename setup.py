@@ -23,12 +23,7 @@ setup(
     author='Gabriele Tocci',
     description='Workflow to trade, analyse and accumulate satoshis and other crypto currencies',
     packages=find_packages(),
-    install_requires=requirements,        
-    entry_points={
-        'console_scripts': [
-            'sats4u-liveapp=sats4u.sats4ulive:main',
-        ],
-    },
+    install_requires=requirements,
     package_data={'': ['data/*.csv']},
     include_package_data=True,
 )

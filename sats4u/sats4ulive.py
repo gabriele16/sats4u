@@ -13,8 +13,8 @@ import mplfinance as mpf
 import path
 import sys
 from streamlit import cli as stcli
-import loadcrypto as lc
-import featbuild as fb
+from sats4u import loadcrypto as lc
+from sats4u import featbuild as fb
 from sats4u import timeutils as tu
 
 crypto_pair_dict = {
@@ -126,13 +126,13 @@ def main():
             chart_placeholder_vma.plotly_chart(fig_vma)
             chart_placeholder_full.plotly_chart(fig_full)
 
-if __name__ == '__main__':
-    if st._is_running_with_streamlit:
-        print("is running with streamlit")
-        main()
-        print("is running with streamlit")
-    else:
-        print("is NOT running with streamlit")
-        sys.argv = ["streamlit", "run", sys.argv[0]]
-        print("is NOT running with streamlit")
-        sys.exit(stcli.main())
+# if __name__ == '__main__':
+#     if st._is_running_with_streamlit:
+#         print("is running with streamlit")
+#         main()
+#         print("is running with streamlit")
+#     else:
+#         print("is NOT running with streamlit")
+#         sys.argv = ["streamlit", "run", sys.argv[0]]
+#         print("is NOT running with streamlit")
+#         sys.exit(stcli.main())
