@@ -26,7 +26,7 @@ setup(
     install_requires=requirements,        
     entry_points={
         'console_scripts': [
-            'sats4u-liveapp=src.sats4ulive:main',
+            'sats4u-liveapp=sats4u.sats4ulive:main',
         ],
     },
     package_data={'': ['data/*.csv']},

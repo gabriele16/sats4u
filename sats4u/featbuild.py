@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import math
 from datetime import datetime, timedelta
-from src import timeutils as tu
+from sats4u import timeutils as tu
 import time
 import matplotlib.pyplot as plt
 import mplfinance as mpf

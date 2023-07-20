@@ -15,7 +15,7 @@ import sys
 from streamlit import cli as stcli
 import loadcrypto as lc
 import featbuild as fb
-from src import timeutils as tu
+from sats4u import timeutils as tu
 
 crypto_pair_dict = {
     "BTCUSDT": "Bitcoin",

@@ -5,7 +5,7 @@ import os
 import datetime
 import time
 from datetime import datetime, timedelta
-from src import timeutils as tu
+from sats4u import timeutils as tu
 from binance import BinanceSocketManager
 from binance import ThreadedWebsocketManager
 from binance.exceptions import BinanceAPIException  # here
