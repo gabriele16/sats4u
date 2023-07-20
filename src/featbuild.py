@@ -324,7 +324,7 @@ class Candles:
 
         add_plots = [candlestick, ma_red_scatter, ma_green_scatter, vma_line, vma_line_gold]
 
-        layout = go.Layout(title=title, yaxis=dict(domain=[0.15, 1]), height=600, width=1000)
+        layout = go.Layout(title=title, yaxis=dict(domain=[0.05, 1]), height=700, width=1000)
         fig = go.Figure(data=add_plots, layout=layout)
         fig.update_layout(showlegend=False, xaxis_rangeslider_visible=False)
 
@@ -334,7 +334,9 @@ class Candles:
         if last_step == 0:
             last_step = len(self.candles)
 
-        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.05, subplot_titles=("Bollinger Bands","RSI", "Volume"))
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.05,
+                             subplot_titles=("Bollinger Bands","RSI", "Volume"),
+                             row_heights=[0.9, 0.3,0.3])
 
         # Candlestick trace
         candlestick_trace = go.Candlestick(
@@ -383,172 +385,8 @@ class Candles:
             height=700,
             showlegend=False,
             yaxis=dict(
-                domain=[0.7, 1]  # Adjust the domain to allocate more space for the volume plot
+                domain=[0.5, 1]  # Adjust the domain to allocate more space for the volume plot
             )
         )
 
         return fig
-
-
-    # def ta_fullplot_plotly(self, in_step=-100, last_step=0):
-    #     if last_step == 0:
-    #         last_step = len(self.candles)
-    #         last_step_vis = -1
-    #     else:
-    #         last_step_vis = last_step
-
-    #     title = f"{self.cryptoname} Chart ({str(self.candles.index[in_step])} - {str(self.candles.index[last_step_vis])})"
-
-    #     fig = go.Figure()
-
-    #     # Candlestick trace
-    #     candlestick_trace = go.Candlestick(
-    #         x=self.candles.index[in_step:last_step],
-    #         open=self.candles["Open"].iloc[in_step:last_step],
-    #         high=self.candles["High"].iloc[in_step:last_step],
-    #         low=self.candles["Low"].iloc[in_step:last_step],
-    #         close=self.candles["Close"].iloc[in_step:last_step],
-    #         name="Candlestick"
-    #     )
-    #     fig.add_trace(candlestick_trace)
-
-    #     # Bollinger Bands trace
-    #     bollinger_bands_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["UpperBB"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="Upper Bollinger Band"
-    #     )
-    #     fig.add_trace(bollinger_bands_trace)
-
-    #     bollinger_bands_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["LowerBB"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="Lower Bollinger Band"
-    #     )
-    #     fig.add_trace(bollinger_bands_trace)
-
-    #     # Create a subplot for RSI, Volume, and Price over Volume
-    #     fig.update_layout(yaxis=dict(domain=[0.4, 1]))  # Adjust the domain to allocate space for the subplot
-
-    #     # Volume trace
-    #     volume_trace = go.Bar(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["Volume"].iloc[in_step:last_step],
-    #         name="Volume",
-    #         showlegend=False
-    #     )
-    #     fig.add_trace(volume_trace, row=1, col=1)
-
-    #     # Price over Volume trace
-    #     price_over_volume_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["price2volratio"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="Price over Volume",
-    #         showlegend=False
-    #     )
-    #     fig.add_trace(price_over_volume_trace, row=2, col=1)
-
-    #     # RSI trace
-    #     rsi_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["RSI"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="RSI",
-    #         showlegend=False
-    #     )
-    #     fig.add_trace(rsi_trace, row=3, col=1)
-
-    #     fig.update_layout(
-    #         title=title,
-    #         xaxis_rangeslider_visible=True,
-    #         height=800,
-    #         grid=dict(rows=3, cols=1, subplot_titles=("Volume", "Price over Volume", "RSI")),
-    #         yaxis=dict(
-    #             domain=[0, 0.3],  # Adjust the domain to allocate space for the candlestick plot
-    #             anchor="x"
-    #         ),
-    #         yaxis2=dict(domain=[0.35, 0.55]),
-    #         yaxis3=dict(domain=[0.6, 0.8])
-    #     )
-
-    #     return fig
-
-
-
-
-    # def ta_fullplot_plotly(self, in_step=-100, last_step=0):
-
-    #     if last_step == 0:
-    #         last_step = len(self.candles)
-    #         last_step_vis = -1
-    #     else:
-    #         last_step_vis = last_step
-
-    #     title = f"{self.cryptoname} Chart ({str(self.candles.index[in_step])} - {str(self.candles.index[last_step_vis])})"
-
-    #     fig = go.Figure()
-
-    #     # Candlestick trace
-    #     candlestick_trace = go.Candlestick(
-    #         x=self.candles.index[in_step:last_step],
-    #         open=self.candles["Open"].iloc[in_step:last_step],
-    #         high=self.candles["High"].iloc[in_step:last_step],
-    #         low=self.candles["Low"].iloc[in_step:last_step],
-    #         close=self.candles["Close"].iloc[in_step:last_step],
-    #         name="Candlestick"
-    #     )
-    #     fig.add_trace(candlestick_trace)
-
-    #     # Bollinger Bands trace
-    #     bollinger_bands_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["UpperBB"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="Upper Bollinger Band"
-    #     )
-    #     fig.add_trace(bollinger_bands_trace)
-
-    #     bollinger_bands_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["LowerBB"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="Lower Bollinger Band"
-    #     )
-    #     fig.add_trace(bollinger_bands_trace)
-
-    #     # Volume trace
-    #     volume_trace = go.Bar(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["Volume"].iloc[in_step:last_step],
-    #         name="Volume"
-    #     )
-    #     fig.add_trace(volume_trace)
-
-    #     # Price over Volume trace
-    #     price_over_volume_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["price2volratio"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="Price over Volume"
-    #     )
-    #     fig.add_trace(price_over_volume_trace)
-
-    #     # RSI trace
-    #     rsi_trace = go.Scatter(
-    #         x=self.candles.index[in_step:last_step],
-    #         y=self.candles["RSI"].iloc[in_step:last_step],
-    #         mode="lines",
-    #         name="RSI"
-    #     )
-    #     fig.add_trace(rsi_trace)
-
-    #     fig.update_layout(
-    #         title=title,
-    #         xaxis_rangeslider_visible=False
-    #     )
-
-    #     return fig
-

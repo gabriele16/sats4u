@@ -39,10 +39,7 @@ def get_dataframe(cryptoobj, tickers):
     ldatadf = cryptoobj.load_cryptos(tickers, save=False)
     return ldatadf
 
-
-
 def main():
-    st.title("Real-time Chart")
 
     with st.sidebar:
         crypto_pair = st.selectbox("Which crypto pairs do you want to analyse", crypto_pair_dict.keys())
@@ -62,6 +59,7 @@ def main():
         time_frame = st.selectbox("Select time-frame", time_frames_dict.keys())
         update_interval = time_frames_dict[time_frame] * 60/2 
 
+    st.title(f"Real-time {time_frame} {crypto_pair_dict[crypto_pair]} Chart")
     rerun_button = st.button("Run App")
 
     # Create a search bar for the API key
