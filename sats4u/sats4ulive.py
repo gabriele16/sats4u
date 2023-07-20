@@ -13,9 +13,9 @@ import mplfinance as mpf
 import path
 import sys
 from streamlit import cli as stcli
-from sats4u import loadcrypto as lc
-from sats4u import featbuild as fb
-from sats4u import timeutils as tu
+from . import loadcrypto as lc
+from . import featbuild as fb
+from . import timeutils as tu
 
 crypto_pair_dict = {
     "BTCUSDT": "Bitcoin",
