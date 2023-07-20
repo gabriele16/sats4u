@@ -92,10 +92,12 @@ class CryptoData:
         self._binance_api_secret = api_secret
         if server_location == 'US':
             self.binance_client = Client(
-                self._binance_api_key, self._binance_api_secret, tld='us' )
+                self._binance_api_key, self._binance_api_secret, tld='us')
+            print("Extracting data from Binance.us")            
         elif server_location == 'not-US':
             self.binance_client = Client(
-                self._binance_api_key, self._binance_api_secret)
+                self._binance_api_key, self._binance_api_secret, tld='com')
+            print("Extracting data from Binance.com")
         else:
             raise ValueError('server_location must be either US or not-US')
 

@@ -278,16 +278,54 @@ class Candles:
                     figratio=(24, 12), style='yahoo',
                     volume=True,
                     addplot=[vma_plot, ma_red_plot, ma_green_plot],title = title)  
+            
+    def get_vma_dataframe(self, in_step, last_step):
+
+        vma_df = pd.DataFrame({
+            "Date": self.candles[in_step:last_step].index,
+            "vma_line": self.candles['vma'][in_step:last_step],
+            "red_scatter": self.candles["High"][in_step:last_step].where(
+                (self.candles['Close'] + self.candles["Close"]) * 0.5 <
+                self.candles["ma"] * (1 - 1e-4)).replace(0.0, np.nan),
+            "green_scatter": self.candles["Low"][in_step:last_step].where(
+                (self.candles['Close'] + self.candles["Close"]) * 0.5 >
+                self.candles["ma"] * (1 + 1e-4)).replace(0.0, np.nan)
+        })
+
+        # Add the 'Signal' column based on the trading strategy
+        vma_df['Signal'] = 0  # Initialize with 0 (Hold)
+        vma_df['Signal'] = np.where(
+            (vma_df['red_scatter'].shift(1) < vma_df['vma_line'].shift(1)) &
+            (vma_df['red_scatter'].shift(2) < vma_df['vma_line'].shift(2)) &
+            (vma_df['red_scatter'] < vma_df['vma_line']),
+            -1,  # Short signal (Sell)
+            vma_df['Signal']
+        )
+        vma_df['Signal'] = np.where(
+            (vma_df['green_scatter'].shift(1) > vma_df['vma_line'].shift(1)) &
+            (vma_df['green_scatter'].shift(2) > vma_df['vma_line'].shift(2)) &
+            (vma_df['green_scatter'] > vma_df['vma_line']),
+            1,  # Long signal (Buy)
+            vma_df['Signal']
+        )
+
+        # Calculate the returns in percentage based on the trading signals
+        vma_df['Returns'] = vma_df['Signal'].shift(1) * self.candles['Close'][in_step:last_step].pct_change()
+
+        return vma_df            
 
     def ta_vma_plotly(self, in_step, last_step):
 
         if last_step == 0:
             last_step = len(self.candles)
-            last_step_vis = -1
-        else:
-            last_step_vis = last_step
 
-        title = f"{self.cryptoname} Dots & Track Line" # ({str(self.candles[in_step].name)} - {str(self.candles[last_step_vis].name)})"
+        title = f"{self.cryptoname} Dots & Track Line Strategy" # ({str(self.candles[in_step].name)} - {str(self.candles[last_step_vis].name)})"
+
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.05,
+                             subplot_titles=("Dots & Track Line","Returns", "Signals"),
+                             row_heights=[1.0, 0.3,0.3])
+
+        vma_df = self.get_vma_dataframe(in_step, last_step)
 
         candlestick = go.Candlestick(x=self.candles[in_step:last_step].index,
                                     open=self.candles['Open'][in_step:last_step],
@@ -296,24 +334,24 @@ class Candles:
                                     close=self.candles['Close'][in_step:last_step],
                                     increasing=dict(line=dict(color='green')),
                                     decreasing=dict(line=dict(color='red')))
+        fig.add_trace(candlestick, row=1, col=1)
 
-        ma_red_scatter = go.Scatter(x=self.candles[in_step:last_step].index,
-                                    y=self.candles["High"][in_step:last_step].where(
-                                        (self.candles['Close'] + self.candles["Close"]) * 0.5 <
-                                        self.candles["ma"] * (1 - 1e-4)).replace(0.0, float('nan')),
+        ma_red_scatter = go.Scatter(x=vma_df.index,
+                                    y=vma_df["red_scatter"],
                                     mode='markers',
                                     marker=dict(color='red', size=7, symbol='circle'))
+        fig.add_trace(ma_red_scatter, row=1, col=1)
 
-        ma_green_scatter = go.Scatter(x=self.candles[in_step:last_step].index,
-                                    y=(self.candles["Low"][in_step:last_step]).where(
-                                        (self.candles['Close'] + self.candles["Close"]) * 0.5 >
-                                        self.candles["ma"] * (1 + 1e-4)).replace(0.0, float('nan')),
+        ma_green_scatter = go.Scatter(x=vma_df.index,
+                                    y=vma_df["green_scatter"],
                                     mode='markers',
                                     marker=dict(color='green', size=7, symbol='circle'))
+        fig.add_trace(ma_green_scatter, row=1, col=1)
 
         vma_line = go.Scatter(x=self.candles[in_step:last_step].index,
                             y=self.candles['vma'][in_step:last_step],
                             mode='lines')
+        fig.add_trace(vma_line, row=1, col=1)
         
         vma_line_gold = go.Scatter(x=self.candles[in_step:last_step].index,
                                 y=self.candles['vma'][in_step:last_step].where(
@@ -321,14 +359,34 @@ class Candles:
                                     np.nan),
                                 mode='lines',
                                 line=dict(color='gold', width=3))
+        fig.add_trace(vma_line_gold, row=1, col=1)
 
-        add_plots = [candlestick, ma_red_scatter, ma_green_scatter, vma_line, vma_line_gold]
+        # Signal
+        signal_bar = go.Bar(
+            x=vma_df.index,
+            y=vma_df["Signal"],
+            name="signal"
+        )
+        fig.add_trace(signal_bar, row=2, col=1)
 
-        layout = go.Layout(title=title, yaxis=dict(domain=[0.05, 1]), height=700, width=1000)
-        fig = go.Figure(data=add_plots, layout=layout)
-        fig.update_layout(showlegend=False, xaxis_rangeslider_visible=False)
+        # cumulative returns
+        cum_returns = go.Scatter(
+            x=vma_df.index,
+            y=( vma_df["Returns"]  + 1 ).cumprod() -1,
+            mode="lines"
+        )
+        fig.add_trace(cum_returns, row=3, col=1)
 
-        return fig
+        fig.update_layout(
+            xaxis_rangeslider_visible=False,
+            width=1000,
+            height=700,
+            showlegend=False,
+            yaxis=dict(
+                domain=[0.5, 1]  # Adjust the domain to allocate more space for the volume plot
+            )
+        )
+        return fig  
 
     def ta_fullplot_plotly(self, in_step, last_step):
         if last_step == 0:

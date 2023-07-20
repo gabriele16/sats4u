@@ -36,7 +36,7 @@ crypto_pair_dict = {
 
 @st.cache
 def get_dataframe(cryptoobj, tickers):
-    ldatadf = cryptoobj.load_cryptos(tickers, save=True)
+    ldatadf = cryptoobj.load_cryptos(tickers, save=False)
     return ldatadf
 
 def main():
@@ -74,6 +74,7 @@ def main():
         asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
         crypto = lc.CryptoData(asset_details, data_folder)
         crypto.set_binance_api_keys(api_key, api_secret, server_location=server_location)
+        print(f"server location {server_location}")
         crypto.trade_time_units(dt=60, kline_size=time_frame, period=time_frames_dict[time_frame],
                                 starting_date='1 Mar 2017')
 
@@ -116,6 +117,13 @@ def main():
             last_update_time = time.time()
 
             iteration += 1
+
+            ### Test code
+            crypto.set_binance_api_keys(api_key, api_secret, server_location=server_location)
+            print(f"server location {server_location}")
+            crypto.trade_time_units(dt=60, kline_size=time_frame, period=time_frames_dict[time_frame],
+                                    starting_date='1 Mar 2017')     
+            ### End test code       
 
             crypto_name = crypto_pair_dict[crypto_pair]
             candles = fb.Candles(ldata_df, crypto_name, target=target)
