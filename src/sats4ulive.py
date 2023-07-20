@@ -127,4 +127,8 @@ def main():
             chart_placeholder_full.plotly_chart(fig_full)
 
 if __name__ == '__main__':
-    main()
+    if st._is_running_with_streamlit:
+        main()
+    else:
+        sys.argv = ["streamlit", "run", sys.argv[0]]
+        sys.exit(stcli.main())
