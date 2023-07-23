@@ -187,8 +187,9 @@ class Candles:
 
     def buildfeatures(self):
 
+        self.candles["High"][self.candles["High"] > 80000] = self.candles["Close"][self.candles["High"] > 80000]
         self.bbands()
-        self.vma()
+        self.vma(length = 9)
         self.ma()
         self.ma_up_low()
         self.vma_col()
@@ -284,23 +285,22 @@ class Candles:
         vma_df = pd.DataFrame({
             "Date": self.candles[in_step:last_step].index,
             "vma_line": self.candles['vma'][in_step:last_step],
+            "vma_gold": self.candles['vma'][in_step:last_step].where(
+                        self.candles['vma'][in_step:last_step].duplicated(keep=False),
+                        np.nan),
             "red_scatter": self.candles["High"][in_step:last_step].where(
-                (self.candles['Close'] + self.candles["Close"]) * 0.5 <
-                self.candles["ma"] * (1 - 1e-4)).replace(0.0, np.nan),
+                (self.candles['Close'][in_step:last_step] + 
+                 self.candles["Close"][in_step:last_step]) * 0.5 <
+                self.candles["ma"][in_step:last_step] * (1 - 1e-4)).replace(0.0, np.nan),
             "green_scatter": self.candles["Low"][in_step:last_step].where(
-                (self.candles['Close'] + self.candles["Close"]) * 0.5 >
-                self.candles["ma"] * (1 + 1e-4)).replace(0.0, np.nan)
+                (self.candles['Close'][in_step:last_step] +
+                  self.candles["Close"][in_step:last_step]) * 0.5 >
+                self.candles["ma"][in_step:last_step] * (1 + 1e-4)).replace(0.0, np.nan)
         })
 
         # Add the 'Signal' column based on the trading strategy
         vma_df['Signal'] = 0  # Initialize with 0 (Hold)
-        vma_df['Signal'] = np.where(
-            (vma_df['red_scatter'].shift(1) < vma_df['vma_line'].shift(1)) &
-            (vma_df['red_scatter'].shift(2) < vma_df['vma_line'].shift(2)) &
-            (vma_df['red_scatter'] < vma_df['vma_line']),
-            -1,  # Short signal (Sell)
-            vma_df['Signal']
-        )
+
         vma_df['Signal'] = np.where(
             (vma_df['green_scatter'].shift(1) > vma_df['vma_line'].shift(1)) &
             (vma_df['green_scatter'].shift(2) > vma_df['vma_line'].shift(2)) &
@@ -309,8 +309,39 @@ class Candles:
             vma_df['Signal']
         )
 
+        vma_df['Signal'] = np.where(
+            (vma_df['red_scatter'].shift(1) < vma_df['vma_line'].shift(1)) &
+            (vma_df['red_scatter'].shift(2) < vma_df['vma_line'].shift(2)) &
+            (vma_df['red_scatter'] < vma_df['vma_line']),
+            -1,  # Short signal (Sell), if 0 then it is Hold
+            vma_df['Signal']
+        )
+
+        vma_df["Signal"] = np.where(
+            (vma_df["vma_line"] < self.candles['High'][in_step:last_step]) &
+            (vma_df["vma_line"] > self.candles['Low'][in_step:last_step] ),
+            0, vma_df["Signal"]
+        )
+
+        vma_df["Signal"] = np.where(
+            pd.notna(vma_df["vma_gold"]), 0, vma_df["Signal"]
+        )
+
+        vma_df["Signal"] = np.where(
+            (self.candles["RSI"][in_step:last_step] > 80. ) & 
+            (vma_df["Signal"] == 1)
+            , 0, vma_df["Signal"]
+        ) # Do not go long if RSI > 70
+
+        vma_df["Signal"] = np.where(
+            (self.candles["RSI"][in_step:last_step] < 20. ) & 
+            (vma_df["Signal"] == -1)
+            , 0, vma_df["Signal"]
+        ) # Do not go short if RSI < 30
+
         # Calculate the returns in percentage based on the trading signals
-        vma_df['Returns'] = vma_df['Signal'].shift(1) * self.candles['Close'][in_step:last_step].pct_change()
+        vma_df['Returns'] = vma_df['Signal'].shift(1) * 0.5*(self.candles['Close'][in_step:last_step] +
+                                                         self.candles['Open'][in_step:last_step]).pct_change()
 
         return vma_df            
 
@@ -322,7 +353,7 @@ class Candles:
         title = f"{self.cryptoname} Dots & Track Line Strategy" # ({str(self.candles[in_step].name)} - {str(self.candles[last_step_vis].name)})"
 
         fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.05,
-                             subplot_titles=("Dots & Track Line","Returns", "Signals"),
+                             subplot_titles=("Dots & Track Line","Signals", "Cumulative Returns"),
                              row_heights=[1.0, 0.3,0.3])
 
         vma_df = self.get_vma_dataframe(in_step, last_step)
@@ -382,19 +413,19 @@ class Candles:
             width=1000,
             height=700,
             showlegend=False,
-            yaxis=dict(
-                domain=[0.5, 1]  # Adjust the domain to allocate more space for the volume plot
-            )
+#            xaxis_range=[vma_df.index[0], vma_df.index[-1]]
         )
+
         return fig  
 
     def ta_fullplot_plotly(self, in_step, last_step):
         if last_step == 0:
             last_step = len(self.candles)
 
-        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.05,
-                             subplot_titles=("Bollinger Bands","RSI", "Volume"),
-                             row_heights=[0.9, 0.3,0.3])
+        fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.05,
+                             subplot_titles=("Bollinger Bands","Relative BBands","RSI", "Volume"),
+                             row_heights=[1., 0.3,0.3,0.2]
+                             )
 
         # Candlestick trace
         candlestick_trace = go.Candlestick(
@@ -421,13 +452,30 @@ class Candles:
         )
         fig.add_trace(bollinger_bands_trace, row=1, col=1)
 
+        avg = ((self.candles["Close"] + self.candles["Open"]).rolling(
+            window=self.rollwindow).mean())/2
+        # Relative BBands trace
+        relative_bbands = ((self.candles["UpperBB"] - self.candles["LowerBB"])/avg)
+        
+        second_deriv = ((relative_bbands  - 2*relative_bbands.shift(1) +
+                relative_bbands.shift(2))/relative_bbands)
+        
+        first_deriv = (relative_bbands  - relative_bbands.shift(1))/relative_bbands
+        
+        relative_avg_trace = go.Scatter(
+            x=self.candles[in_step:last_step].index,
+            y= relative_bbands[in_step:last_step],
+            mode="lines"
+        )
+        fig.add_trace(relative_avg_trace, row=2, col=1)
+
         # RSI trace
         rsi_trace = go.Scatter(
             x=self.candles[in_step:last_step].index,
             y=self.candles["RSI"][in_step:last_step],
             mode="lines"
         )
-        fig.add_trace(rsi_trace, row=2, col=1)
+        fig.add_trace(rsi_trace, row=3, col=1)
 
         # Volume trace
         volume_trace = go.Bar(
@@ -435,16 +483,16 @@ class Candles:
             y=self.candles["Volume"][in_step:last_step],
             name="Volume"
         )
-        fig.add_trace(volume_trace, row=3, col=1)
+        fig.add_trace(volume_trace, row=4, col=1)
 
         fig.update_layout(
             xaxis_rangeslider_visible=False,
             width=1000,
             height=700,
             showlegend=False,
-            yaxis=dict(
-                domain=[0.5, 1]  # Adjust the domain to allocate more space for the volume plot
-            )
+            # yaxis=dict(
+            #     domain=[0.1, 1.]
+            # )
         )
 
         return fig

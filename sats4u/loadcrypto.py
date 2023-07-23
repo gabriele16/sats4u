@@ -248,8 +248,6 @@ class CryptoData:
                     data_df = pd.concat(
                         [data_df.drop(columns=["timestamp", "Date"]), data_df_temp], axis=1)
 
-        list_basic_features = ["Open", "High",
-                               "Low", "Close", "Volume", "Count"]
         cols_basic_feats = [
             col for col in data_df.columns if col != "timestamp" and col != "Date"]
         data_df[cols_basic_feats] = data_df[cols_basic_feats].astype(float)
@@ -262,5 +260,7 @@ class CryptoData:
         data_df["Future Date"] = (
             data_df["timestamp"] + self.dt * self.period).apply(tu.todatetime).values
         data_df["Date"] = (data_df["timestamp"]).apply(tu.todatetime).values
+
+        print(data_df.columns)
 
         return data_df
