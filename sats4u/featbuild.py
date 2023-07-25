@@ -12,7 +12,7 @@ from plotly.subplots import make_subplots
 
 
 class Candles:
-    def __init__(self, cryptodf, cryptoname, target="Close", rollwindow=10):
+    def __init__(self, cryptoname, target="Close", rollwindow=10):
 
         what_to_predict = ['Close', 'LogReturns', 'UpDown']
         if target not in what_to_predict:
@@ -22,29 +22,32 @@ class Candles:
         self.target = target
         self.cryptoname = cryptoname
         self.rollwindow = rollwindow
+
+    def set_candles(self, cryptodf):
+
         self.candles = cryptodf[
             [
                 "Date",
-                "Low" + cryptoname,
-                "High" + cryptoname,
-                "Open" + cryptoname,
-                "Close" + cryptoname,
-                "Volume" + cryptoname,
+                "Low" + self.cryptoname,
+                "High" + self.cryptoname,
+                "Open" + self.cryptoname,
+                "Close" + self.cryptoname,
+                "Volume" + self.cryptoname,
             ]
         ].copy()
         self.candles.set_index("Date", inplace=True)
         self.candles.rename(
             columns={
-                "Low" + cryptoname: "Low",
-                "High" + cryptoname: "High",
-                "Open" + cryptoname: "Open",
-                "Close" + cryptoname: "Close",
-                "Volume" + cryptoname: "Volume",
+                "Low" + self.cryptoname: "Low",
+                "High" + self.cryptoname: "High",
+                "Open" + self.cryptoname: "Open",
+                "Close" + self.cryptoname: "Close",
+                "Volume" + self.cryptoname: "Volume",
             },
             inplace=True,
         )
 
-        self.dtime_index = self.candles.index[1] - self.candles.index[0]
+        self.dtime_index = self.candles.index[1] - self.candles.index[0]        
 
     def _running_moments(self):
 
@@ -350,8 +353,6 @@ class Candles:
         if last_step == 0:
             last_step = len(self.candles)
 
-        title = f"{self.cryptoname} Dots & Track Line Strategy" # ({str(self.candles[in_step].name)} - {str(self.candles[last_step_vis].name)})"
-
         fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.05,
                              subplot_titles=("Dots & Track Line","Signals", "Cumulative Returns"),
                              row_heights=[1.0, 0.3,0.3])
@@ -413,7 +414,7 @@ class Candles:
             width=1000,
             height=700,
             showlegend=False,
-#            xaxis_range=[vma_df.index[0], vma_df.index[-1]]
+            xaxis_range=[vma_df.index[0], vma_df.index[-1]]
         )
 
         return fig  
@@ -455,12 +456,10 @@ class Candles:
         avg = ((self.candles["Close"] + self.candles["Open"]).rolling(
             window=self.rollwindow).mean())/2
         # Relative BBands trace
-        relative_bbands = ((self.candles["UpperBB"] - self.candles["LowerBB"])/avg)
-        
-        second_deriv = ((relative_bbands  - 2*relative_bbands.shift(1) +
-                relative_bbands.shift(2))/relative_bbands)
-        
-        first_deriv = (relative_bbands  - relative_bbands.shift(1))/relative_bbands
+        relative_bbands = ((self.candles["UpperBB"] - self.candles["LowerBB"])/avg)        
+        # second_deriv = ((relative_bbands  - 2*relative_bbands.shift(1) +
+        #         relative_bbands.shift(2))/relative_bbands)
+        # first_deriv = (relative_bbands  - relative_bbands.shift(1))/relative_bbands
         
         relative_avg_trace = go.Scatter(
             x=self.candles[in_step:last_step].index,
@@ -490,9 +489,6 @@ class Candles:
             width=1000,
             height=700,
             showlegend=False,
-            # yaxis=dict(
-            #     domain=[0.1, 1.]
-            # )
         )
 
         return fig

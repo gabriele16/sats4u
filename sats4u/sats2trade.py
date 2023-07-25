@@ -1,3 +1,184 @@
+import os
+import time
+import pandas as pd
+import argparse
+from . import loadcrypto as lc
+from . import featbuild as fb
+from . import timeutils as tu
+
+# Define the Sats2Trade class that inherits from CryptoData and Candles
+class Sats2Trade(lc.CryptoData, lc.Candles):
+    def __init__(self, crypto_pair):
+        # Call the __init__ methods of the parent classes explicitly
+        self.set_data_folder_and_asset_details()
+        lc.CryptoData.__init__(self, self.asset_details, self.data_folder)
+
+        self.crypto_pair = crypto_pair
+        cryptoname = self.crypto_pair_dict[crypto_pair]
+        fb.Candles.__init__(self, cryptoname, target="UpDown", rollwindow=10)
+
+        # Initialize an empty dataframe to store the returns and cumulative returns
+        self.returns_df = pd.DataFrame(columns=["Date", "Returns", "Cumulative Returns"])
+
+    def set_data_folder_and_asset_details(self):
+
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        root_dir = os.path.join(root_dir, "..")
+        self.data_folder = os.path.join(root_dir, "data")
+        self.asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
+
+    # Function to place a buy order
+    def place_buy_order(self, quantity):
+        try:
+            order = self.binance_client.create_order(
+                symbol=self.crypto_pair,
+                side='BUY',
+                type='MARKET',
+                quantity=quantity
+            )
+            print(f"Buy order {order['orderId']} placed successfully: {order}")
+        except Exception as e:
+            print("Error placing buy order:", e)
+
+    # Function to place a sell order
+    def place_sell_order(self, quantity):
+        try:
+            order = self.binance_client.create_order(
+                symbol=self.crypto_pair,
+                side='SELL',
+                type='MARKET',
+                quantity=quantity
+            )
+            print(f"Sell order {order['orderId']} placed successfully: {order}")
+        except Exception as e:
+            print("Error placing sell order:", e)
+
+    # Function to place a short sell order
+    def place_short_sell_order(self, quantity):
+        try:
+            order = self.binance_client.create_order(
+                symbol=self.crypto_pair,
+                side='SELL',
+                type='MARKET',
+                quantity=quantity,
+                isIsolated='TRUE'  # Enable this if using isolated margin for short selling
+            )
+            print(f"Short sell order {order['orderId']} placed successfully: {order}")
+        except Exception as e:
+            print("Error placing short sell order:", e)
+
+    # Function to update the technical indicators and signals
+    def update_technical_indicators(self, in_step = 0, last_step = -1):
+        # Your code to update the technical indicators here
+
+        self.buildfeatures()
+        # Get the signals DataFrame
+        signals_df = self.get_vma_dataframe(in_step, last_step)
+        return signals_df        
+
+    def trade_loop(self, quantity):
+        previous_signal = 0
+        current_position = 0
+        while True:
+            try:
+                # Get new candles data
+                ldatadf = self.load_cryptos(self.crypto_pair, save=True)
+                self.set_candles(ldatadf)
+
+                # Update technical indicators and get signals
+                signals_df = self.update_technical_indicators(self.candles)
+
+                # Get the last signal (latest entry in the DataFrame)
+                last_signal = signals_df.iloc[-1]['Signal']
+
+                # If the signal changes from 0 to 1, place a buy order
+                if previous_signal == 0 and last_signal == 1:
+                    self.place_buy_order(quantity)
+                    # Calculate the value of the order in USDT and update the balance
+                    order_value = quantity * self.get_last_price(self.crypto_pair)
+                    initial_balance -= order_value
+                    current_position = 1
+
+                # If the signal changes from 1 to 0 and there is an open position, close the position
+                if previous_signal == 1 and last_signal == 0 and current_position == 1:
+                    self.place_sell_order(quantity)
+                    # Calculate the value of the order in USDT and update the balance
+                    order_value = quantity * self.get_last_price(self.crypto_pair)
+                    initial_balance += order_value
+                    current_position = 0
+
+                # If the signal changes from 0 to -1, place a short sell order
+                if previous_signal == 0 and last_signal == -1:
+                    self.place_short_sell_order(quantity)
+                    # Calculate the value of the order in USDT and update the balance
+                    order_value = quantity * self.get_last_price(self.crypto_pair)
+                    initial_balance -= order_value
+                    current_position = -1
+
+                # If the signal changes from -1 to 0 and there is an open short position, close the short position
+                if previous_signal == -1 and last_signal == 0 and current_position == -1:
+                    self.place_sell_order(quantity)
+                    # Calculate the value of the order in USDT and update the balance
+                    order_value = quantity * self.get_last_price(self.crypto_pair)
+                    initial_balance += order_value
+                    current_position = 0
+
+                # Calculate the current returns and cumulative returns
+                current_returns = (initial_balance / self.get_account_balance("USDT")) - 1
+                cumulative_returns = current_returns + 1
+
+                # Append the new returns to the returns dataframe
+                self.returns_df = self.returns_df.append(
+                    {"Date": pd.Timestamp.now(), "Returns": current_returns, "Cumulative Returns": cumulative_returns},
+                    ignore_index=True,
+                )
+
+                # Set the previous signal for the next iteration
+                previous_signal = last_signal
+                # Update the current position based on the signal
+                current_position = last_signal
+
+                # Set the previous signal for the next iteration
+                previous_signal = last_signal
+
+                # Sleep for a certain period before the next iteration
+                time.sleep(60)  # Sleep for 60 seconds (adjust this based on your strategy)
+            except Exception as e:
+                print("Error occurred:", e)
+
+
+def parse_arguments():
+    # Create the argument parser
+    parser = argparse.ArgumentParser(description="Run the trading algorithm.")
+    
+    # Add the arguments as options
+    parser.add_argument("--quantity", type=float, help="Quantity value for the trades.")
+    parser.add_argument("--crypto_pair", type=str, help="Cryptocurrency pair for trading.")
+    parser.add_argument("--testnet", action="store_true", help="Use testnet mode for trading.")
+    parser.add_argument("--secrets_filename", type=str, help="Path to the secrets filename.")
+    
+    # Parse the arguments
+    args = parser.parse_args()
+
+    return args
+
+# run sats2trade
+if __name__ == "__main__":
+
+    # Parse the arguments
+    args = parse_arguments()
+    # Retrieve the values from the parsed arguments
+    quantity_val = args.quantity
+    crypto_pair_val = args.crypto_pair
+    testnet_val = args.testnet
+    secrets_filename = args.secrets_filename
+
+    sats2trade = Sats2Trade(crypto_pair=crypto_pair_val)
+#    sats2trade.set_binance_api_keys(api_key, api_secret, server_location = 'not-US', testnet=True)
+    sats2trade.load_binance_client(secrets_filename, testnet = testnet_val)    # Start the algorithmic trading loop
+    sats2trade.trade_loop(quantity_val)
+
+
 # def strategy(pair, entry, lookback, qty, open_position=False):
 #     while True:
 #         df = pd.read_sql(pair, engine)

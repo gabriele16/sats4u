@@ -41,6 +41,23 @@ class CryptoData:
             "DOGEUSDT": 4,
         }
 
+        self.crypto_pair_dict = {
+            "BTCUSDT": "Bitcoin",
+            "BCHUSDT": "Bitcoin Cash",
+            "BNBUSDT": "Binance Coin",
+            "EOSUSDT": "EOS.IO",
+            "ETCUSDT": "Ethereum Classic",
+            "ETHUSDT": "Ethereum",
+            "LTCUSDT": "Litecoin",
+            "XMRUSDT": "Monero",
+            "TRXUSDT": "TRON",
+            "XLMUSDT": "Stellar",
+            "ADAUSDT": "Cardano",
+            "IOTAUSDT": "IOTA",
+            "MKRUSDT": "Maker",
+            "DOGEUSDT": "Dogecoin"
+        }        
+
         self.tick_to_id_df = pd.DataFrame(
             np.array([list(self.tick_to_id.keys()), list(
                 self.tick_to_id.values())]).T, columns=["Ticker", "Asset_ID"]
@@ -87,16 +104,16 @@ class CryptoData:
         self.binance_client = Client(
             self._binance_api_key, self._binance_api_secret, testnet=testnet)
     
-    def set_binance_api_keys(self, api_key, api_secret, server_location = 'not-US'):
+    def set_binance_api_keys(self, api_key, api_secret, server_location = 'not-US', testnet=False):
         self._binance_api_key = api_key
         self._binance_api_secret = api_secret
         if server_location == 'US':
             self.binance_client = Client(
-                self._binance_api_key, self._binance_api_secret, tld='us')
+                self._binance_api_key, self._binance_api_secret, tld='us', testnet=testnet)
             print("Extracting data from Binance.us")            
         elif server_location == 'not-US':
             self.binance_client = Client(
-                self._binance_api_key, self._binance_api_secret, tld='com')
+                self._binance_api_key, self._binance_api_secret, tld='com',testnet=testnet)
             print("Extracting data from Binance.com")
         else:
             raise ValueError('server_location must be either US or not-US')
@@ -261,6 +278,27 @@ class CryptoData:
             data_df["timestamp"] + self.dt * self.period).apply(tu.todatetime).values
         data_df["Date"] = (data_df["timestamp"]).apply(tu.todatetime).values
 
-        print(data_df.columns)
-
         return data_df
+    
+    def get_last_price(self, symbol):
+        try:
+            # Get the last price for the specified cryptocurrency pair
+            ticker = self.binance_client.get_symbol_ticker(symbol=symbol)
+            last_price = float(ticker["lastPrice"])
+            return last_price
+        except Exception as e:
+            print("Error fetching last price:", e)
+            return None
+
+    def get_account_balance(self, asset):
+        try:
+            # Get the account balance for the specified asset
+            account_info = self.binance_client.get_account()
+            balances = account_info["balances"]
+            for balance in balances:
+                if balance["asset"] == asset:
+                    return float(balance["free"])
+            return 0.0  # Return 0 if the asset is not found in the account
+        except Exception as e:
+            print("Error fetching account balance:", e)
+            return None

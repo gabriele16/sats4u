@@ -28,7 +28,6 @@ crypto_pair_dict = {
 @st.cache
 def get_dataframe(cryptoobj, tickers):
     ldatadf = cryptoobj.load_cryptos(tickers, save=True)
-
     return ldatadf
 
 def main():
@@ -76,7 +75,8 @@ def main():
         ldata_df = get_dataframe(crypto, tickers)
         crypto_name = crypto_pair_dict[crypto_pair]
         target = "UpDown"
-        candles = fb.Candles(ldata_df, crypto_name, target=target)
+        candles = fb.Candles(crypto_name, target=target)
+        candles.set_candles(ldata_df)
 
         # Get the minimum and maximum dates from the dataframe
         min_date = tu.todatetime(ldata_df.index[0])
