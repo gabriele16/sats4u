@@ -26,4 +26,9 @@ setup(
     install_requires=requirements,
     package_data={'': ['data/*.csv']},
     include_package_data=True,
+    entry_points={
+        'console_scripts': [
+            'sats2trade = sats4u.sats2trade:main',
+        ],
+    },           
 )

@@ -290,14 +290,46 @@ class CryptoData:
             print("Error fetching last price:", e)
             return None
 
+    # def get_account_balance(self, asset):
+    #     try:
+    #         # Get the account balance for the specified asset
+    #         account_info = self.binance_client.get_account()
+    #         balances = account_info["balances"]
+    #         for balance in balances:
+    #             if balance["asset"] == asset:
+    #                 return float(balance["free"])
+    #         return 0.0  # Return 0 if the asset is not found in the account
+    #     except Exception as e:
+    #         print("Error fetching account balance:", e)
+    #         return None
+
     def get_account_balance(self, asset):
         try:
             # Get the account balance for the specified asset
             account_info = self.binance_client.get_account()
             balances = account_info["balances"]
-            for balance in balances:
-                if balance["asset"] == asset:
-                    return float(balance["free"])
+
+            if asset == "all":
+                # Create a DataFrame to store the balances of all assets
+                balance_data = {"Asset": [], "Free": [], "Locked": []}
+
+                for balance in balances:
+                    asset_name = balance["asset"]
+                    free_balance = float(balance["free"])
+                    locked_balance = float(balance["locked"])
+
+                    balance_data["Asset"].append(asset_name)
+                    balance_data["Free"].append(free_balance)
+                    balance_data["Locked"].append(locked_balance)
+
+                balances_df = pd.DataFrame(balance_data)
+                return balances_df
+            else:
+                # Return the balance of the specified asset as a float
+                for balance in balances:
+                    if balance["asset"] == asset:
+                        return float(balance["free"])
+
             return 0.0  # Return 0 if the asset is not found in the account
         except Exception as e:
             print("Error fetching account balance:", e)
