@@ -28,7 +28,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'sats2trade = sats4u.sats2trade:main',
+            'sats2trade = sats4u.scripts.trade:run_trade',
         ],
     },           
 )
