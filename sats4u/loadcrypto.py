@@ -74,10 +74,12 @@ class CryptoData:
                           "1d": 60*24}
         self._batch_size = 750
 
-    def trade_time_units(self, dt=60, period=15, kline_size="1m", starting_date="1 Mar 2022"):
+    def trade_time_units(self, dt=60, kline_size="15m", starting_date="1 Mar 2022"):
 
+        self._binance_api_constants()
         self.dt = dt
         self.kline_size = kline_size
+        self.period = self._binsizes[kline_size]
         self.starting_date = starting_date
         self.dt_daily = 60 * 60 * 24
         self.minute = 1 * self.dt
@@ -86,8 +88,6 @@ class CryptoData:
         self.week = self.day * 7
         self.month = self.day * 30
         self.year = self.day * 365
-        self.period = period
-        self._binance_api_constants()
 
     def load_binance_client(self, secrets_filename, data1_str="DATA1", data2_str="DATA2i", testnet=False):
 
@@ -135,7 +135,7 @@ class CryptoData:
                 print(e)
                 print(
                     "Something went wrong. Error occured at %s. Wait for 1 hour."
-                    % (datetime.datetime.now().astimezone(timezone("UTC")))
+                    % (datetime.datetime.now().astimezone(datetime.timezone("UTC")))
                 )
                 time.sleep(3600)
                 self.binance_client = Client(
@@ -186,7 +186,7 @@ class CryptoData:
             print(e)
             print(
                 "Something went wrong. Error occured at %s. Wait for 1 hour."
-                % (datetime.datetime.now().astimezone(timezone("UTC")))
+                % (datetime.datetime.now().astimezone(datetime.timezone("UTC")))
             )
             time.sleep(3600)
             self.binance_client = Client(
@@ -284,7 +284,7 @@ class CryptoData:
         try:
             # Get the last price for the specified cryptocurrency pair
             ticker = self.binance_client.get_symbol_ticker(symbol=symbol)
-            last_price = float(ticker["lastPrice"])
+            last_price = float(ticker["price"])
             return last_price
         except Exception as e:
             print("Error fetching last price:", e)
@@ -303,18 +303,18 @@ class CryptoData:
     #         print("Error fetching account balance:", e)
     #         return None
 
-    def get_account_balance(self, asset):
+    def get_account_balance(self, assets):
         try:
             # Get the account balance for the specified asset
             account_info = self.binance_client.get_account()
             balances = account_info["balances"]
 
-            if asset == "all":
-                # Create a DataFrame to store the balances of all assets
-                balance_data = {"Asset": [], "Free": [], "Locked": []}
+            # Create a DataFrame to store the balances of all assets
+            balance_data = {"Asset": [], "Free": [], "Locked": []}
 
-                for balance in balances:
-                    asset_name = balance["asset"]
+            for balance in balances:
+                asset_name = balance["asset"]
+                if asset_name in assets:
                     free_balance = float(balance["free"])
                     locked_balance = float(balance["locked"])
 
@@ -322,13 +322,8 @@ class CryptoData:
                     balance_data["Free"].append(free_balance)
                     balance_data["Locked"].append(locked_balance)
 
-                balances_df = pd.DataFrame(balance_data)
-                return balances_df
-            else:
-                # Return the balance of the specified asset as a float
-                for balance in balances:
-                    if balance["asset"] == asset:
-                        return float(balance["free"])
+            balances_df = pd.DataFrame(balance_data)
+            return balances_df
 
             return 0.0  # Return 0 if the asset is not found in the account
         except Exception as e:

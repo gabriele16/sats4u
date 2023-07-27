@@ -7,12 +7,23 @@ from . import timeutils as tu
 
 # Define the Sats2Trade class that inherits from CryptoData and Candles
 class Sats2Trade(lc.CryptoData, fb.Candles):
-    def __init__(self, crypto_pair):
+    def __init__(self, crypto_pair="BTCUSDT", time_frame="15m"):
         # Call the __init__ methods of the parent classes explicitly
         self.set_data_folder_and_asset_details()
         lc.CryptoData.__init__(self, self.asset_details, self.data_folder)
 
+        self.trade_time_units(dt=60, kline_size=time_frame,
+                               starting_date="1 Mar 2022")
+        
+        self.reference_currency = "USDT"
+
+        if self.reference_currency not in crypto_pair:
+            raise ValueError(f"The crypto pair must be priced in the reference currency: \
+                              {self.reference_currency}")
+
         self.crypto_pair = crypto_pair
+        self.assets_to_trade = [self.reference_currency, 
+                                crypto_pair.split(self.reference_currency)]
         cryptoname = self.crypto_pair_dict[crypto_pair]
         fb.Candles.__init__(self, cryptoname, target="UpDown", rollwindow=10)
 
@@ -25,6 +36,8 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         root_dir = os.path.join(root_dir, "..")
         self.data_folder = os.path.join(root_dir, "data")
         self.asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
+        print(self.asset_details)
+        print(self.data_folder)
 
     # Function to place a buy order
     def place_buy_order(self, quantity):
@@ -78,15 +91,23 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
     def get_portfolio(self, balances):
         # Calculate the total portfolio value in USDT
         total_value = 0
-        for asset in balances:
-            if asset['asset'] == 'USDT':
-                total_value += float(asset['free']) + float(asset['locked'])
+        for asset in balances["Asset"].values:
+#            print(asset)
+            if asset == self.reference_currency :
+                total_value += float(balances[balances["Asset"] == asset]['Free'].values) + \
+                float(balances[balances["Asset"] == asset]['Locked'].values)
             else:
-                asset_symbol = asset['asset'] + 'USDT'
+                asset_symbol = asset + self.reference_currency
+                print(asset_symbol)
                 asset_price = self.get_last_price(asset_symbol)
-                total_value += (float(asset['free']) + float(asset['locked'])) * asset_price
+                print(asset_price)
+                if asset_price is not None:
+                    total_value += (float(balances[balances["Asset"] == asset]['Free'].values) + \
+                                 float(balances[balances["Asset"] == asset]['Locked'].values)) * asset_price
 
         # Calculate the current returns and cumulative returns
+        if not hasattr(self, 'initial_balance'):
+            self.initial_balance = total_value
         current_returns = (total_value / self.initial_balance) - 1
         cumulative_returns = current_returns + 1
 
@@ -110,12 +131,13 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
     def trade_loop(self, quantity):
         previous_signal = 0
         current_position = 0
-        self.initial_balance = self.get_account_balance("USDT")  # Store the initial balance for calculating returns
-
+        balances = self.get_account_balance(self.assets_to_trade)
+        self.initial_balance, current_returns, cumulative_returns = self.get_portfolio(balances)  # Store the initial balance for calculating returns
         while True:
             try:
                 # Get new candles data
-                ldatadf = self.load_cryptos(self.crypto_pair, save=True)
+                print("Getting new candles data...")
+                ldatadf = self.load_cryptos([self.crypto_pair], save=True)
                 self.set_candles(ldatadf)
 
                 # Update trade signal based on technical analysis only for now
@@ -157,7 +179,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                     current_position = 0
 
                 # Calculate the portfolio details
-                balances = self.get_account_balance()
+                balances = self.get_account_balance(self.assets_to_trade)
                 total_balance, current_returns, cumulative_returns = self.get_portfolio(balances)
 
                 # Set the previous signal for the next iteration
