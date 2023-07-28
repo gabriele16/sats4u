@@ -345,6 +345,7 @@ class Candles:
         # Calculate the returns in percentage based on the trading signals
         vma_df['Returns'] = vma_df['Signal'].shift(1) * 0.5*(self.candles['Close'][in_step:last_step] +
                                                          self.candles['Open'][in_step:last_step]).pct_change()
+        vma_df["Cumulative Returns"] = (1 + vma_df["Returns"]).cumprod() -1.
 
         return vma_df            
 
@@ -404,7 +405,7 @@ class Candles:
         # cumulative returns
         cum_returns = go.Scatter(
             x=vma_df.index,
-            y=( vma_df["Returns"]  + 1 ).cumprod() -1,
+            y=( vma_df["Cumulative Returns"] ),
             mode="lines"
         )
         fig.add_trace(cum_returns, row=3, col=1)

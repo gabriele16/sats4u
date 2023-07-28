@@ -12,6 +12,18 @@ def log_return(series, periods=1):
         log_ret*= -1.
     return log_ret
 
+def get_utc_timestamp():
+    return int(time.time())
+
+def get_next_interval_start(current_time, time_frame):
+    interval_duration = parse_time_frame(time_frame)
+    return ((current_time // interval_duration) + 1) * interval_duration
+
+def parse_time_frame(time_frame):
+    units = {"s": 1, "m": 60, "h": 3600, "d": 86400}  # Mapping of time frame units to seconds
+    duration, unit = int(time_frame[:-1]), time_frame[-1]
+    return duration * units[unit]
+
 def todatetime(timestamp):
 
     return datetime.fromtimestamp(timestamp)

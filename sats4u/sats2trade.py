@@ -27,17 +27,12 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         cryptoname = self.crypto_pair_dict[crypto_pair]
         fb.Candles.__init__(self, cryptoname, target="UpDown", rollwindow=10)
 
-        # Initialize an empty dataframe to store the returns and cumulative returns
-        self.returns_df = pd.DataFrame(columns=["Date", "Returns", "Cumulative Returns"])
-
     def set_data_folder_and_asset_details(self):
 
         root_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.join(root_dir, "..")
         self.data_folder = os.path.join(root_dir, "data")
         self.asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
-        print(self.asset_details)
-        print(self.data_folder)
 
     # Function to place a buy order
     def place_buy_order(self, quantity):
@@ -80,27 +75,28 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
             print("Error placing short sell order:", e)
 
     # Function to update the technical indicators and signals
-    def update_trade_signal(self, in_step = 0, last_step = -1):
-        # Your code to update the technical indicators here
+    def update_trade_signal(self):
 
         self.buildfeatures()
         # Get the signals DataFrame
+        in_step = self.rollwindow
+        last_step = self.candles.shape[0]
         signals_df = self.get_vma_dataframe(in_step, last_step)
         return signals_df        
 
-    def get_portfolio(self, balances):
+    def get_portfolio(self, balances, model_signal = 0, 
+                        model_current_return = 0,
+                        model_cumulative_return = 1):
+        
         # Calculate the total portfolio value in USDT
         total_value = 0
         for asset in balances["Asset"].values:
-#            print(asset)
             if asset == self.reference_currency :
                 total_value += float(balances[balances["Asset"] == asset]['Free'].values) + \
                 float(balances[balances["Asset"] == asset]['Locked'].values)
             else:
                 asset_symbol = asset + self.reference_currency
-                print(asset_symbol)
                 asset_price = self.get_last_price(asset_symbol)
-                print(asset_price)
                 if asset_price is not None:
                     total_value += (float(balances[balances["Asset"] == asset]['Free'].values) + \
                                  float(balances[balances["Asset"] == asset]['Locked'].values)) * asset_price
@@ -108,12 +104,16 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         # Calculate the current returns and cumulative returns
         if not hasattr(self, 'initial_balance'):
             self.initial_balance = total_value
+
         current_returns = (total_value / self.initial_balance) - 1
         cumulative_returns = current_returns + 1
 
         # If portfolio_df is not defined, create it
         if not hasattr(self, 'portfolio_df'):
-            self.portfolio_df = pd.DataFrame(columns=["Date", "Total Balance", "Returns", "Cumulative Returns"])
+            self.portfolio_df = pd.DataFrame(columns=["Date", "Total Balance",
+                                                       "Returns", "Cumulative Returns",
+                                                       "Model Return", "Cumulative Model Return",
+                                                       "Model Signal"])
 
         # Append the new data to the portfolio_df
         self.portfolio_df = self.portfolio_df.append(
@@ -122,6 +122,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 "Total Balance": total_value,
                 "Returns": current_returns,
                 "Cumulative Returns": cumulative_returns,
+                "Model Return": model_current_return,
+                "Cumulative Model Return": model_cumulative_return,
+                "Model Signal": model_signal,
             },
             ignore_index=True,
         )
@@ -134,17 +137,20 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         balances = self.get_account_balance(self.assets_to_trade)
         self.initial_balance, current_returns, cumulative_returns = self.get_portfolio(balances)  # Store the initial balance for calculating returns
         while True:
-            try:
+            #try:
                 # Get new candles data
                 print("Getting new candles data...")
                 ldatadf = self.load_cryptos([self.crypto_pair], save=True)
                 self.set_candles(ldatadf)
 
                 # Update trade signal based on technical analysis only for now
-                signals_df = self.update_trade_signal(self.candles)
+                signals_df = self.update_trade_signal()
 
                 # Get the last signal (latest entry in the DataFrame)
                 last_signal = signals_df.iloc[-1]['Signal']
+                print(signals_df.tail())
+                model_current_return = signals_df.iloc[-1]['Return']
+                model_cumulative_return = signals_df.iloc[-1]['Cumulative Return']
 
                 # If the signal changes from 0 to 1, place a buy order
                 if previous_signal == 0 and last_signal == 1:
@@ -180,8 +186,12 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
                 # Calculate the portfolio details
                 balances = self.get_account_balance(self.assets_to_trade)
-                total_balance, current_returns, cumulative_returns = self.get_portfolio(balances)
+                total_balance, current_returns, cumulative_returns = self.get_portfolio(balances,
+                                                                                         model_signal=last_signal,
+                                                                                         model_current_return=model_current_return,
+                                                                                         model_cumulative_return=model_cumulative_return)
 
+                print(self.portfolio_df.tail())
                 # Set the previous signal for the next iteration
                 previous_signal = last_signal
                 # Update the current position based on the signal
@@ -189,41 +199,5 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
                 # Sleep for a certain period before the next iteration
                 time.sleep(60)  # Sleep for 60 seconds (adjust this based on your strategy)
-            except Exception as e:
-                print("Error occurred:", e)
-
-
-# def strategy(pair, entry, lookback, qty, open_position=False):
-#     while True:
-#         df = pd.read_sql(pair, engine)
-#         df.head()
-#         lookbackperiod = df.iloc[-lookback:]
-#         cumret = (lookbackperiod.Price.pct_change() +1).cumprod() - 1
-#         if not open_position:
-#             print(open_position)
-#             if cumret[cumret.last_valid_index()] > entry:
-#                 order = client.create_order(symbol=pair,
-#                                            side='BUY',
-#                                            type='MARKET',
-#                                            quantity=qty)
-#                 print(order)
-#                 open_position = True
-#                 break
-#     if open_position:
-#         while True:
-#             df = pd.read_sql(pair, engine)
-#             sincebuy = df.loc[df.Time > 
-#                               pd.to_datetime(order['transactTime'],
-#                                             unit='ms')]
-#             if len(sincebuy) > 1:
-#                 sincebuyret = (sincebuy.Price.pct_change() +1).cumprod() - 1
-#                 last_entry = sincebuyret[sincebuyret.last_valid_index()]
-#                 if last_entry > 0.0015 or last_entry < -0.0015:
-#                     order = client.create_order(symbol=pair,
-#                                            side='SELL',
-#                                            type='MARKET',
-#                                            quantity=qty)
-#                     print(order)
-#                     break
- 
-#def tradesats(investment=100):
+            #except Exception as e:
+            #    print("Error occurred:", e)

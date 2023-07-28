@@ -325,7 +325,6 @@ class CryptoData:
             balances_df = pd.DataFrame(balance_data)
             return balances_df
 
-            return 0.0  # Return 0 if the asset is not found in the account
         except Exception as e:
             print("Error fetching account balance:", e)
             return None
