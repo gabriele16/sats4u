@@ -24,6 +24,18 @@ def parse_time_frame(time_frame):
     duration, unit = int(time_frame[:-1]), time_frame[-1]
     return duration * units[unit]
 
+def wait_for_next_interval(time_frame):
+
+    # Calculate the time remaining for the current time interval to complete
+    current_time = get_utc_timestamp()
+    next_interval_start = get_next_interval_start(current_time, time_frame)
+    time_remaining = next_interval_start - current_time
+
+    # Wait until the current time interval completes
+    if time_remaining > 0:
+        print(f"Waiting for {time_remaining} seconds for the next interval to complete...")
+        time.sleep(time_remaining)     
+
 def todatetime(timestamp):
 
     return datetime.fromtimestamp(timestamp)

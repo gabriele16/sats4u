@@ -95,6 +95,54 @@ class Candles:
         
         self.candles["RSI"] = rsi
 
+    def moving_average(self, x, n, type='simple'):
+            """
+            compute an n period moving average.
+
+            type is 'simple' | 'exponential'
+
+            """
+            x = np.asarray(x)
+            if type == 'simple':
+                weights = np.ones(n)
+            else:
+                weights = np.exp(np.linspace(-1., 0., n))
+
+            weights /= weights.sum()
+
+            moving_avg = np.convolve(x, weights, mode='full')[:len(x)]
+            moving_avg[:n] = moving_avg[n]
+            return moving_avg
+
+    def moving_average_convergence(self, x, nslow=26, nfast=12):
+        """
+        compute the MACD (Moving Average Convergence/Divergence) using a fast and
+        slow exponential moving avg
+
+        return value is emaslow, emafast, macd which are len(x) arrays
+        """
+        emaslow = self.moving_average(x, nslow, type='exponential')
+        emafast = self.moving_average(x, nfast, type='exponential')
+        return emaslow, emafast, emafast - emaslow
+
+    def weighted_moving_average(self, a, n=3) :
+        ret = np.cumsum(a, dtype=float)
+        ret[n:] = ret[n:] - ret[:-n]
+        return np.append(np.array([1]*n), ret[n - 1:] / n)[1:]
+
+    def calcHullMA_inference(self, series, N=50):
+        SMA1 = self.weighted_moving_average(series, N)
+        SMA2 = self.weighted_moving_average(series, int(N/2))
+        res = (2 * SMA2 - SMA1)
+        return np.mean(res[-int(np.sqrt(N)):])
+
+        #row["hull"] = last_close - calcHullMA_inference(f[asset]["all_close"][-260:], 240)
+
+    def WMA(self, s, period):
+        return s.rolling(period).apply(lambda x: ((np.arange(period)+1)*x).sum()/(np.arange(period)+1).sum(), raw=True)
+
+    def HMA(self, s, period):
+        return self.WMA(self.WMA(s, period//2).multiply(2).sub(self.WMA(s, period)), int(np.sqrt(period)))   
 
     def vma(self, length = 9):
 
@@ -206,6 +254,52 @@ class Candles:
         self.candles = self.candles.iloc[self.rollwindow:]
 #        self.candles.fillna(method="pad", inplace=True)
         self.switch2lastcol(colname=self.target)
+
+    def upper_shadow(self, df): return df['High'] - np.maximum(df['Close'], df['Open'])
+    def lower_shadow(self, df): return np.minimum(df['Close'], df['Open']) - df['Low']
+
+    # Credit: https://www.kaggle.com/swaralipibose/64-new-features-with-autoencoders/code
+    def get_features_xgb(self, df_feat, row = False):
+
+        upper_Shadow = self.upper_shadow(df_feat)
+        lower_Shadow = self.lower_shadow(df_feat)
+        
+        df_feat["high_div_low"] = df_feat["High"] / df_feat["Low"]
+
+        df_feat['high_div_low_change1'] = df_feat['high_div_low'].pct_change(1)
+
+        df_feat["mom_change1"] = df_feat["Close"].pct_change(1) 
+
+        df_feat["mom_lag3"] = df_feat["Close"].pct_change(3)
+        df_feat["mom_lag4"] = df_feat["Close"].pct_change(4)
+
+        df_feat["mom_lag5"] = df_feat["Close"].pct_change(5)
+        df_feat["mom_lag7"] = df_feat["Close"].pct_change(7)
+
+        df_feat["rsi_14"] = self.relative_strength_index(df_feat["Close"], n =14)
+        df_feat["rsi_7"] = self.relative_strength_index(df_feat["Close"], n =7)
+        df_feat["rsi_5"] = self.relative_strength_index(df_feat["Close"], n =5)
+        df_feat["rsi_3"] = self.relative_strength_index(df_feat["Close"], n =3)
+
+        df_feat["rsi_3_change3"] = df_feat["rsi_3"].pct_change(3)
+        df_feat["rsi_3_change5"] = df_feat["rsi_3"].pct_change(5)
+
+        df_feat["rsi_14_change1"] = df_feat["rsi_14"].pct_change(1)
+        df_feat["rsi_14_change5"] = df_feat["rsi_14"].pct_change(5)
+        df_feat["rsi_14_change3"] = df_feat["rsi_14"].pct_change(3)
+
+        ma = self.moving_average(df_feat["Close"], n=31)
+
+        ma_slow, ma_fast, df_feat["macd_26_12"] = self.moving_average_convergence(df_feat["Close"], nslow=26, nfast=12)
+        ma_slow, ma_fast, df_feat["macd_14_7"] = self.moving_average_convergence(df_feat["Close"], nslow=14, nfast=7)
+
+        df_feat['shadow3'] = upper_Shadow / df_feat['Volume']
+        df_feat['shadow5'] = lower_Shadow / df_feat['Volume']
+
+        df_feat['shadow5_chg1'] = df_feat['shadow5'].diff(1)
+        df_feat['shadow3_chg1'] = df_feat["shadow3"].diff(1)
+
+        return df_feat
 
     def ta_plot(self, in_step=-100):
 

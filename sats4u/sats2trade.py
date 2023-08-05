@@ -1,3 +1,4 @@
+import logging
 import os, sys
 import time
 import pandas as pd
@@ -9,10 +10,11 @@ from . import timeutils as tu
 class Sats2Trade(lc.CryptoData, fb.Candles):
     def __init__(self, crypto_pair="BTCUSDT", time_frame="15m"):
         # Call the __init__ methods of the parent classes explicitly
+        self.time_frame = time_frame
         self.set_data_folder_and_asset_details()
         lc.CryptoData.__init__(self, self.asset_details, self.data_folder)
 
-        self.trade_time_units(dt=60, kline_size=time_frame,
+        self.trade_time_units(dt=60, kline_size=self.time_frame,
                                starting_date="1 Mar 2022")
         
         self.reference_currency = "USDT"
@@ -43,9 +45,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 type='MARKET',
                 quantity=quantity
             )
-            print(f"Buy order {order['orderId']} placed successfully: {order}")
+            logging.info(f"Buy order {order['orderId']} placed successfully: {order} at {tu.get_utc_timestamp()}")
         except Exception as e:
-            print("Error placing buy order:", e)
+            logging.info("Error placing buy order:", e)
 
     # Function to place a sell order
     def place_sell_order(self, quantity):
@@ -56,9 +58,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 type='MARKET',
                 quantity=quantity
             )
-            print(f"Sell order {order['orderId']} placed successfully: {order}")
+            logging.info(f"Sell order {order['orderId']} placed successfully: {order} at {tu.get_utc_timestamp()}")
         except Exception as e:
-            print("Error placing sell order:", e)
+            logging.info("Error placing sell order:", e)
 
     # Function to place a short sell order
     def place_short_sell_order(self, quantity):
@@ -70,9 +72,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 quantity=quantity,
                 isIsolated='TRUE'  # Enable this if using isolated margin for short selling
             )
-            print(f"Short sell order {order['orderId']} placed successfully: {order}")
+            logging.info(f"Short sell order {order['orderId']} placed successfully: {order} at {tu.get_utc_timestamp()}")
         except Exception as e:
-            print("Error placing short sell order:", e)
+            logging.info("Error placing short sell order:", e)
 
     # Function to update the technical indicators and signals
     def update_trade_signal(self):
@@ -85,8 +87,8 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         return signals_df        
 
     def get_portfolio(self, balances, model_signal = 0, 
-                        model_current_return = 0,
-                        model_cumulative_return = 1):
+                        model_current_returns = 0,
+                        model_cumulative_returns = 1):
         
         # Calculate the total portfolio value in USDT
         total_value = 0
@@ -112,8 +114,10 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         if not hasattr(self, 'portfolio_df'):
             self.portfolio_df = pd.DataFrame(columns=["Date", "Total Balance",
                                                        "Returns", "Cumulative Returns",
-                                                       "Model Return", "Cumulative Model Return",
+                                                       "Model Returns", "Cumulative Model Returns",
                                                        "Model Signal"])
+            self.portfolio_df.to_csv('portfolio.csv', mode='a', header=True, index=False)
+                                           
 
         # Append the new data to the portfolio_df
         self.portfolio_df = self.portfolio_df.append(
@@ -122,12 +126,14 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 "Total Balance": total_value,
                 "Returns": current_returns,
                 "Cumulative Returns": cumulative_returns,
-                "Model Return": model_current_return,
-                "Cumulative Model Return": model_cumulative_return,
+                "Model Returns": model_current_returns,
+                "Cumulative Model Returns": model_cumulative_returns,
                 "Model Signal": model_signal,
             },
             ignore_index=True,
         )
+        self.portfolio_df.to_csv('portfolio.csv', mode='a', header=False, index=False)
+
 
         return total_value, current_returns, cumulative_returns
 
@@ -136,10 +142,16 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         current_position = 0
         balances = self.get_account_balance(self.assets_to_trade)
         self.initial_balance, current_returns, cumulative_returns = self.get_portfolio(balances)  # Store the initial balance for calculating returns
+        # Set up logging
+        logging.basicConfig(filename='trade_loop.log', level=logging.INFO,
+                             format='%(asctime)s - %(levelname)s - %(message)s')
+
         while True:
             #try:
+
+                tu.wait_for_next_interval(self.time_frame)
                 # Get new candles data
-                print("Getting new candles data...")
+                logging.info("Getting new candles data...")
                 ldatadf = self.load_cryptos([self.crypto_pair], save=True)
                 self.set_candles(ldatadf)
 
@@ -148,9 +160,12 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
                 # Get the last signal (latest entry in the DataFrame)
                 last_signal = signals_df.iloc[-1]['Signal']
-                print(signals_df.tail())
-                model_current_return = signals_df.iloc[-1]['Return']
-                model_cumulative_return = signals_df.iloc[-1]['Cumulative Return']
+                # logging.info("Signal DataFrame:")
+                # logging.info(signals_df.tail(1))
+                # Append signals_df to signals.csv
+                signals_df.to_csv('signals.csv', mode='a', header=True, index=False)
+                model_current_returns = signals_df.iloc[-1]['Returns']
+                model_cumulative_returns = signals_df.iloc[-1]['Cumulative Returns']
 
                 # If the signal changes from 0 to 1, place a buy order
                 if previous_signal == 0 and last_signal == 1:
@@ -188,10 +203,11 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 balances = self.get_account_balance(self.assets_to_trade)
                 total_balance, current_returns, cumulative_returns = self.get_portfolio(balances,
                                                                                          model_signal=last_signal,
-                                                                                         model_current_return=model_current_return,
-                                                                                         model_cumulative_return=model_cumulative_return)
+                                                                                         model_current_returns=model_current_returns,
+                                                                                         model_cumulative_returns=model_cumulative_returns)
+                logging.info("Portfolio DataFrame:")
+                logging.info(self.portfolio_df.tail(1))
 
-                print(self.portfolio_df.tail())
                 # Set the previous signal for the next iteration
                 previous_signal = last_signal
                 # Update the current position based on the signal

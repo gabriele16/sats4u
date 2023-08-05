@@ -66,8 +66,7 @@ def main():
         crypto = lc.CryptoData(asset_details, data_folder)
         crypto.set_binance_api_keys(api_key, api_secret, server_location=server_location)
         print(f"server location {server_location}")
-        crypto.trade_time_units(dt=60, kline_size=time_frame, period=time_frames_dict[time_frame],
-                                starting_date='1 Mar 2017')
+        crypto.trade_time_units(dt=60, kline_size=time_frame,starting_date='1 Mar 2017')
 
         tickers = crypto.asset_details["Ticker"]
         tickers = list(tickers[tickers == crypto_pair].values)
