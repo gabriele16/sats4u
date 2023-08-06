@@ -146,12 +146,15 @@ class CryptoData:
     def get_new_spot_or_futures_klines(self, symbol, kline_size, market="spot"):
         
         if market == "spot":
-            klines = self.binance_client.get_klines(symbol, kline_size)[-1][0]
+            new_klines = pd.to_datetime(
+                self.binance_client.get_klines(
+                symbol = symbol, interval = kline_size)[-1][0], unit="ms")
 
         elif market == "futures":
-            klines = self.binance_client.futures_klines(symbol, kline_size)[-1][0]
+            new_klines = pd.to_datetime(
+                self.binance_client.futures_klines(
+                symbol = symbol, interval = kline_size)[-1][0], unit="ms")
         
-        new_klines = pd.to_datetime(klines, unit="ms")        
         return new_klines
 
     def get_spot_or_futures_historical_klines(self, symbol, kline_size, 

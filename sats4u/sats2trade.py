@@ -39,36 +39,71 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         self.asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
 
     # Function to place an order
-    def open_position(self, quantity, order_side="BUY",is_isolated_margin="FALSE"):
-        try:
-            order = self.binance_client.create_order(
-                symbol=self.crypto_pair,
-                side=order_side,
-                type='MARKET',
-                quantity=quantity,
-                isIsolatedMargin=is_isolated_margin
-            )
-            logging.info(f"{order_side} order {order['orderId']} placed successfully: {order} at {tu.get_utc_timestamp()}")
-        except Exception as e:
-            logging.info(f"Error placing {order_side} order:", e)
+    def open_position(self, quantity, order_side="BUY",
+                      market = "spot",
+                      is_isolated_margin="FALSE"):
+        
+        if market == "spot":
+            try:
+                order = self.binance_client.create_order(
+                    symbol=self.crypto_pair,
+                    side=order_side,
+                    type='MARKET',
+                    quantity=quantity
+                )
+                logging.info(f"Spot {order_side} order {order['orderId']} placed successfully: {order} at {tu.get_utc_timestamp()}")
+            except Exception as e:
+                logging.info(f"Error opening Spot {order_side} order:", e)
+        elif market == "futures":
+            try:
+                order = self.binance_client.futures_create_order(
+                    symbol=self.crypto_pair,
+                    side=order_side,
+                    type='MARKET',
+                    quantity=quantity,
+                    isIsolated=is_isolated_margin
+                )
+                logging.info(f"Futures {order_side} order {order['orderId']} placed successfully: {order} at {tu.get_utc_timestamp()}")
+            except Exception as e:
+                logging.info(f"Error opening Futures {order_side} order:", e)
 
-    def close_position(self, quantity, order_side = "SELL"):
-        try:
-            order = self.binance_client.create_order(
-                symbol=self.crypto_pair,
-                side=order_side,  # To close a short position, you buy the same amount of the asset
-                type='MARKET',
-                quantity=quantity
-            )
-            if order_side == "SELL":
-                position_type = "LONG"
-            elif order_side == "BUY":
-                position_type = "SHORT"
-            logging.info(f"{position_type} position closed successfully: {order} at {tu.get_utc_timestamp()}")
-        except Exception as e:
-            logging.error(f"Error closing {position_type} position:", e)
+    def close_position(self, quantity, order_side = "SELL",
+                       market = "spot"):
+        
+        if market == "spot":
+            try:
+                order = self.binance_client.create_order(
+                    symbol=self.crypto_pair,
+                    side=order_side,  # To close a short position, you buy the same amount of the asset
+                    type='MARKET',
+                    quantity=quantity
+                )
+                if order_side == "SELL":
+                    position_type = "LONG"
+                elif order_side == "BUY":
+                    position_type = "SHORT"
+                logging.info(f"Spot {position_type} position closed successfully: {order} at {tu.get_utc_timestamp()}")
+            except Exception as e:
+                logging.error(f"Error closing Spot {position_type} position:", e)
+        elif market == "futures":
+            try:
+                order = self.binance_client.futures_create_order(
+                    symbol=self.crypto_pair,
+                    side=order_side,  # To close a short position, you buy the same amount of the asset
+                    type='MARKET',
+                    quantity=quantity
+                )
+                if order_side == "SELL":
+                    position_type = "LONG"
+                elif order_side == "BUY":
+                    position_type = "SHORT"
+                logging.info(f"Futures {position_type} position closed successfully: {order} at {tu.get_utc_timestamp()}")
+            except Exception as e:
+                logging.error(f"Error closing Futures {position_type} position:", e)
 
-    def close_all_positions(self):
+
+
+    def close_all_positions(self, market = "spot"):
         try:
             # Get the account information
             account_info = self.binance_client.get_account()
@@ -80,9 +115,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 if position["asset"] == self.crypto_asset:
                     # Check the position side (BUY or SELL) and call the appropriate function to close the position
                     if position["side"] == "BUY":
-                        self.close_position(float(position["free"]), order_side="SELL")
+                        self.close_position(float(position["free"]), order_side="SELL", market = market)
                     elif position["side"] == "SELL":
-                        self.close_position(float(position["free"]), order_side="BUY")
+                        self.close_position(float(position["free"]), order_side="BUY", market=market)
                         
         except Exception as e:
             logging.error("Error closing open positions:", e)
