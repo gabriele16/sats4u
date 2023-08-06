@@ -49,6 +49,16 @@ def main():
                             "15m": 15, "5m": 5, "1m": 1}
         time_frame = st.selectbox("Select time-frame", time_frames_dict.keys())
 
+        starting_dates_wrt_time_frame = {'1 Mar 2017':"1d", 
+                                        '1 Jan 2018':"4h", 
+                                        '1 Jan 2020':"1h",
+                                        '1 Jan 2021':"30m",
+                                        '1 May 2021':"15m",
+                                        '1 Jun 2021':"5m",
+                                        '1 Jan 2023':"1m"
+                                        }
+        starting_date = starting_dates_wrt_time_frame[time_frame]
+
     st.title(f"Real-time {time_frame} {crypto_pair_dict[crypto_pair]} Chart")
 
 #    rerun_button = st.button("Run App")
@@ -66,7 +76,7 @@ def main():
         crypto = lc.CryptoData(asset_details, data_folder, market = "spot")
         crypto.set_binance_api_keys(api_key, api_secret, server_location=server_location)
         print(f"server location {server_location}")
-        crypto.trade_time_units(dt=60, kline_size=time_frame,starting_date='1 Mar 2017')
+        crypto.trade_time_units(dt=60, kline_size=time_frame,starting_date=starting_date)
 
         tickers = crypto.asset_details["Ticker"]
         tickers = list(tickers[tickers == crypto_pair].values)

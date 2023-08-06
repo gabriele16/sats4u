@@ -104,23 +104,41 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
 
     def close_all_positions(self, market = "spot"):
-        try:
-            # Get the account information
-            account_info = self.binance_client.get_account()
-            print(account_info)
-            open_positions = account_info["balances"]
-            
-            # Loop through the open positions and close them
-            for position in open_positions:
-                if position["asset"] == self.crypto_asset:
-                    # Check the position side (BUY or SELL) and call the appropriate function to close the position
-                    if position["side"] == "BUY":
-                        self.close_position(float(position["free"]), order_side="SELL", market = market)
-                    elif position["side"] == "SELL":
-                        self.close_position(float(position["free"]), order_side="BUY", market=market)
-                        
-        except Exception as e:
-            logging.error("Error closing open positions:", e)
+
+        if market == "spot":
+            try:
+                # Get the account information
+                account_info = self.binance_client.get_account()
+                print(account_info)
+                open_positions = account_info["balances"]
+                
+                # Loop through the open positions and close them
+                for position in open_positions:
+                    if position["asset"] == self.crypto_asset:
+                        # Check the position side (BUY or SELL) and call the appropriate function to close the position
+                        if float(position["free"]) > 1e-5 :
+                            self.close_position(float(position["free"]), order_side="SELL", market = market)
+            except Exception as e:
+                logging.error("Error closing open positions:", e)
+  
+        elif market == "futures":
+            try:
+                # Get the account information
+                account_info = self.binance_client.futures_account(version=2)
+                print(account_info)
+                open_positions = account_info["balances"]
+                
+                # Loop through the open positions and close them
+                # for position in open_positions:
+                #     if position["asset"] == self.crypto_asset:
+                #         # Check the position side (BUY or SELL) and call the appropriate function to close the position
+                #         if float(position["free"]) > 1e-5 :
+                #             self.close_position(float(position["free"]), order_side="SELL", market = market)
+            except Exception as e:
+                logging.error("Error closing open positions:", e)
+        #sleep a little bit after closing the positions to make sure the orders are filled  
+        time.sleep(10)          
+    
 
     # # Function to place a sell order
     # def place_sell_order(self, quantity):
@@ -228,7 +246,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         logging.basicConfig(filename='trade_loop.log', level=logging.INFO,
                              format='%(asctime)s - %(levelname)s - %(message)s')
         
-        sys.exit()
+        #sys.exit()
 
         while True:
             #try:

@@ -162,12 +162,12 @@ class CryptoData:
         
         if market == "spot":
             klines = self.binance_client.get_historical_klines(symbol, kline_size, 
-                                                               oldest_point.strftime("%d %b %Y %H:%M:%S"), 
-                                                               newest_point.strftime("%d %b %Y %H:%M:%S"))
+                                                               oldest_point, 
+                                                               newest_point)
         elif market == "futures":
             klines = self.binance_client.futures_historical_klines(symbol, kline_size, 
-                                                               oldest_point.strftime("%d %b %Y %H:%M:%S"), 
-                                                               newest_point.strftime("%d %b %Y %H:%M:%S"))
+                                                               oldest_point, 
+                                                               newest_point)
         return klines
 
     def _get_all_binance(self, symbol, save=False):
@@ -323,10 +323,14 @@ class CryptoData:
     #         print("Error fetching account balance:", e)
     #         return None
 
-    def get_account_balance(self, assets):
+    def get_account_balance(self, assets, market = "spot"):
         try:
             # Get the account balance for the specified asset
-            account_info = self.binance_client.get_account()
+            if market == "spot":
+                account_info = self.binance_client.get_account()
+            elif market == "futures":
+                account_info = self.binance_client.futures_account()
+                print(account_info)
             balances = account_info["balances"]
 
             # Create a DataFrame to store the balances of all assets
