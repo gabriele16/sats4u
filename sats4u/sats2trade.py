@@ -8,11 +8,11 @@ from . import timeutils as tu
 
 # Define the Sats2Trade class that inherits from CryptoData and Candles
 class Sats2Trade(lc.CryptoData, fb.Candles):
-    def __init__(self, crypto_pair="BTCUSDT", time_frame="15m"):
+    def __init__(self, crypto_pair="BTCUSDT", time_frame="15m", market = "spot"):
         # Call the __init__ methods of the parent classes explicitly
         self.time_frame = time_frame
         self.set_data_folder_and_asset_details()
-        lc.CryptoData.__init__(self, self.asset_details, self.data_folder)
+        lc.CryptoData.__init__(self, self.asset_details, self.data_folder, market = market)
 
         self.trade_time_units(dt=60, kline_size=self.time_frame,
                                starting_date="1 Mar 2022")
@@ -24,8 +24,10 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                               {self.reference_currency}")
 
         self.crypto_pair = crypto_pair
-        self.assets_to_trade = [self.reference_currency, 
-                                crypto_pair.split(self.reference_currency)]
+        self.crypto_asset = crypto_pair.replace(self.reference_currency, "")
+
+        self.assets_to_trade = [self.reference_currency] + [self.crypto_asset]
+
         cryptoname = self.crypto_pair_dict[crypto_pair]
         fb.Candles.__init__(self, cryptoname, target="UpDown", rollwindow=10)
 
@@ -65,6 +67,25 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
             logging.info(f"{position_type} position closed successfully: {order} at {tu.get_utc_timestamp()}")
         except Exception as e:
             logging.error(f"Error closing {position_type} position:", e)
+
+    def close_all_positions(self):
+        try:
+            # Get the account information
+            account_info = self.binance_client.get_account()
+            print(account_info)
+            open_positions = account_info["balances"]
+            
+            # Loop through the open positions and close them
+            for position in open_positions:
+                if position["asset"] == self.crypto_asset:
+                    # Check the position side (BUY or SELL) and call the appropriate function to close the position
+                    if position["side"] == "BUY":
+                        self.close_position(float(position["free"]), order_side="SELL")
+                    elif position["side"] == "SELL":
+                        self.close_position(float(position["free"]), order_side="BUY")
+                        
+        except Exception as e:
+            logging.error("Error closing open positions:", e)
 
     # # Function to place a sell order
     # def place_sell_order(self, quantity):
@@ -109,7 +130,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
     def get_portfolio(self, balances, model_signal = 0, 
                         model_current_returns = 0,
-                        model_cumulative_returns = 1):
+                        model_cumulative_returns = 0):
         
         # Calculate the total portfolio value in USDT
         total_value = 0
@@ -171,6 +192,8 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         # Set up logging
         logging.basicConfig(filename='trade_loop.log', level=logging.INFO,
                              format='%(asctime)s - %(levelname)s - %(message)s')
+        
+        sys.exit()
 
         while True:
             #try:
@@ -195,7 +218,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
                 # If the signal changes from 0 to 1, place a buy order
                 if previous_signal == 0 and last_signal == 1:
-                    self.open_position(quantity, side='BUY', is_isolated_margin = "FALSE")
+                    self.open_position(quantity, order_side='BUY', is_isolated_margin = "FALSE")
                     # Calculate the value of the order in USDT and update the balance
                     order_value = quantity * self.get_last_price(self.crypto_pair)
                     self.initial_balance -= order_value
@@ -205,7 +228,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
                 # If the signal changes from 1 to 0 and there is an open position, close the position
                 if previous_signal == 1 and last_signal == 0 and current_position == 1:
-                    self.close_position(quantity, side='SELL')
+                    self.close_position(quantity, order_side='SELL')
                     # Calculate the value of the order in USDT and update the balance
                     order_value = quantity * self.get_last_price(self.crypto_pair)
                     self.initial_balance += order_value

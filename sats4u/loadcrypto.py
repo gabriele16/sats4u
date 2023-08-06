@@ -18,11 +18,12 @@ import json
 
 
 class CryptoData:
-    def __init__(self, asset_details, data_folder, verbose=True):
+    def __init__(self, asset_details, data_folder, verbose=True, market = "spot"):
 
         self.asset_details = asset_details
         self.data_folder = data_folder
         self.verbose = verbose
+        self.market = market
 
         self.tick_to_id = {
             "BTCUSDT": 1,
@@ -127,10 +128,8 @@ class CryptoData:
             old = datetime.strptime(self.starting_date, "%d %b %Y")
         if source == "binance":
             try:
-                new = pd.to_datetime(
-                    self.binance_client.get_klines(
-                        symbol=symbol, interval=self.kline_size)[-1][0], unit="ms"
-                )
+                new = self.get_new_spot_or_futures_klines(symbol, self.kline_size, market=self.market)
+                
             except BinanceAPIException as e:
                 print(e)
                 print(
@@ -140,12 +139,33 @@ class CryptoData:
                 time.sleep(3600)
                 self.binance_client = Client(
                     self._binance_api_key, self._binance_api_secret)
-                new = pd.to_datetime(
-                    self.binance_client.get_klines(
-                        symbol=symbol, interval=self.kline_size)[-1][0], unit="ms"
-                )
-
+                new = self.get_new_spot_or_futures_klines(symbol, self.kline_size, market=self.market)
+ 
         return old, new
+
+    def get_new_spot_or_futures_klines(self, symbol, kline_size, market="spot"):
+        
+        if market == "spot":
+            klines = self.binance_client.get_klines(symbol, kline_size)[-1][0]
+
+        elif market == "futures":
+            klines = self.binance_client.futures_klines(symbol, kline_size)[-1][0]
+        
+        new_klines = pd.to_datetime(klines, unit="ms")        
+        return new_klines
+
+    def get_spot_or_futures_historical_klines(self, symbol, kline_size, 
+                                              oldest_point, newest_point, market="spot"):
+        
+        if market == "spot":
+            klines = self.binance_client.get_historical_klines(symbol, kline_size, 
+                                                               oldest_point.strftime("%d %b %Y %H:%M:%S"), 
+                                                               newest_point.strftime("%d %b %Y %H:%M:%S"))
+        elif market == "futures":
+            klines = self.binance_client.futures_historical_klines(symbol, kline_size, 
+                                                               oldest_point.strftime("%d %b %Y %H:%M:%S"), 
+                                                               newest_point.strftime("%d %b %Y %H:%M:%S"))
+        return klines
 
     def _get_all_binance(self, symbol, save=False):
 
@@ -176,12 +196,11 @@ class CryptoData:
                 )
 
         try:
-            klines = self.binance_client.get_historical_klines(
-                symbol,
-                self.kline_size,
-                oldest_point.strftime("%d %b %Y %H:%M:%S"),
-                newest_point.strftime("%d %b %Y %H:%M:%S"),
-            )
+            klines = self.get_spot_or_futures_historical_klines(symbol, self.kline_size, 
+                                                               oldest_point.strftime("%d %b %Y %H:%M:%S"), 
+                                                               newest_point.strftime("%d %b %Y %H:%M:%S"),
+                                                                market=self.market)
+
         except BinanceAPIException as e:
             print(e)
             print(
@@ -191,12 +210,10 @@ class CryptoData:
             time.sleep(3600)
             self.binance_client = Client(
                 self._binance_api_key, self._binance_api_secret)
-            klines = self.binance_client.get_historical_klines(
-                symbol,
-                self.kline_size,
-                oldest_point.strftime("%d %b %Y %H:%M:%S"),
-                newest_point.strftime("%d %b %Y %H:%M:%S"),
-            )
+            klines = self.get_spot_or_futures_historical_klines(symbol, self.kline_size, 
+                                                               oldest_point.strftime("%d %b %Y %H:%M:%S"), 
+                                                               newest_point.strftime("%d %b %Y %H:%M:%S"),
+                                                                market=self.market)
 
         data = pd.DataFrame(
             klines,

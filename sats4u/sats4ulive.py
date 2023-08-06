@@ -63,7 +63,7 @@ def main():
         root_dir = os.path.join(root_dir, "..")
         data_folder = os.path.join(root_dir, "data")
         asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
-        crypto = lc.CryptoData(asset_details, data_folder)
+        crypto = lc.CryptoData(asset_details, data_folder, market = "spot")
         crypto.set_binance_api_keys(api_key, api_secret, server_location=server_location)
         print(f"server location {server_location}")
         crypto.trade_time_units(dt=60, kline_size=time_frame,starting_date='1 Mar 2017')

@@ -552,9 +552,6 @@ class Candles:
             window=self.rollwindow).mean())/2
         # Relative BBands trace
         relative_bbands = ((self.candles["UpperBB"] - self.candles["LowerBB"])/avg)        
-        # second_deriv = ((relative_bbands  - 2*relative_bbands.shift(1) +
-        #         relative_bbands.shift(2))/relative_bbands)
-        # first_deriv = (relative_bbands  - relative_bbands.shift(1))/relative_bbands
         
         relative_avg_trace = go.Scatter(
             x=self.candles[in_step:last_step].index,
