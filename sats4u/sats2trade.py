@@ -109,7 +109,6 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
             try:
                 # Get the account information
                 account_info = self.binance_client.get_account()
-                print(account_info)
                 open_positions = account_info["balances"]
                 
                 # Loop through the open positions and close them
@@ -125,15 +124,14 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
             try:
                 # Get the account information
                 account_info = self.binance_client.futures_account(version=2)
-                print(account_info)
-                open_positions = account_info["balances"]
+                open_positions = account_info["assets"]
                 
                 # Loop through the open positions and close them
-                # for position in open_positions:
-                #     if position["asset"] == self.crypto_asset:
+                for position in open_positions:
+                     if position["asset"] == self.crypto_asset:
                 #         # Check the position side (BUY or SELL) and call the appropriate function to close the position
-                #         if float(position["free"]) > 1e-5 :
-                #             self.close_position(float(position["free"]), order_side="SELL", market = market)
+                         if float(position["walletBalance"]) > 1e-5 :
+                            self.close_position(float(position["free"]), order_side="SELL", market = market)
             except Exception as e:
                 logging.error("Error closing open positions:", e)
         #sleep a little bit after closing the positions to make sure the orders are filled  
@@ -189,14 +187,12 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         total_value = 0
         for asset in balances["Asset"].values:
             if asset == self.reference_currency :
-                total_value += float(balances[balances["Asset"] == asset]['Free'].values) + \
-                float(balances[balances["Asset"] == asset]['Locked'].values)
+                total_value += float(balances[balances["Asset"] == asset]['Amount'].values) 
             else:
                 asset_symbol = asset + self.reference_currency
                 asset_price = self.get_last_price(asset_symbol)
                 if asset_price is not None:
-                    total_value += (float(balances[balances["Asset"] == asset]['Free'].values) + \
-                                 float(balances[balances["Asset"] == asset]['Locked'].values)) * asset_price
+                    total_value += (float(balances[balances["Asset"] == asset]['Amount'].values)) * asset_price
 
         # Calculate the current returns and cumulative returns
         if not hasattr(self, 'initial_balance'):
@@ -239,7 +235,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         iteration = 0
         previous_signal = 0
         current_position = 0
-        balances = self.get_account_balance(self.assets_to_trade)
+        balances = self.get_account_balance(self.assets_to_trade, market = self.market)
         balances.to_csv(f'account_balance_{iteration}.csv', header=True, index=False)
         self.initial_balance, current_returns, cumulative_returns = self.get_portfolio(balances)  # Store the initial balance for calculating returns
         # Set up logging
@@ -310,7 +306,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                     logging.info(f"Order value in {self.reference_currency}: {order_value}")
 
                 # Calculate the portfolio details
-                balances = self.get_account_balance(self.assets_to_trade)
+                balances = self.get_account_balance(self.assets_to_trade, market = self.market)
                 total_balance, current_returns, cumulative_returns = self.get_portfolio(balances,
                                                                                          model_signal=last_signal,
                                                                                          model_current_returns=model_current_returns,

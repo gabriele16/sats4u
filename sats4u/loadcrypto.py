@@ -328,23 +328,24 @@ class CryptoData:
             # Get the account balance for the specified asset
             if market == "spot":
                 account_info = self.binance_client.get_account()
+                balances= account_info["balances"]
             elif market == "futures":
                 account_info = self.binance_client.futures_account()
-                print(account_info)
-            balances = account_info["balances"]
+                balances = account_info["assets"]
 
             # Create a DataFrame to store the balances of all assets
-            balance_data = {"Asset": [], "Free": [], "Locked": []}
+            balance_data = {"Asset": [], "Amount": []}
 
             for balance in balances:
                 asset_name = balance["asset"]
                 if asset_name in assets:
-                    free_balance = float(balance["free"])
-                    locked_balance = float(balance["locked"])
+                    if market == "spot":
+                        balance = float(balance["free"])
+                    elif market == "futures":
+                        balance = float(balance["walletBalance"])
 
                     balance_data["Asset"].append(asset_name)
-                    balance_data["Free"].append(free_balance)
-                    balance_data["Locked"].append(locked_balance)
+                    balance_data["Amount"].append(balance)
 
             balances_df = pd.DataFrame(balance_data)
             return balances_df

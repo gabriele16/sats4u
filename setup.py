@@ -5,6 +5,9 @@ from setuptools import setup, find_packages
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
+requirements_stable_ver = [f'{line}' for line in requirements if "==" in line]
+requirements_master_ver = [f'python-binance @ {line}#egg=some-pkg' for line in requirements if "==" not in line]
+
 # # Get the root directory path (one level above setup.py)
 # root_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,7 +26,7 @@ setup(
     author='Gabriele Tocci',
     description='Workflow to trade, analyse and accumulate satoshis and other crypto currencies',
     packages=find_packages(),
-    install_requires=requirements,
+    install_requires=requirements_master_ver + requirements_stable_ver,
     package_data={'': ['data/*.csv']},
     include_package_data=True,
     entry_points={
