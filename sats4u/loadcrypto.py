@@ -330,7 +330,7 @@ class CryptoData:
                 account_info = self.binance_client.get_account()
                 balances= account_info["balances"]
             elif market == "futures":
-                account_info = self.binance_client.futures_account()
+                account_info = self.binance_client.futures_account(version=2)
                 balances = account_info["assets"]
 
             # Create a DataFrame to store the balances of all assets
@@ -342,6 +342,7 @@ class CryptoData:
                     if market == "spot":
                         balance = float(balance["free"])
                     elif market == "futures":
+                        print(balance)
                         balance = float(balance["walletBalance"])
 
                     balance_data["Asset"].append(asset_name)
