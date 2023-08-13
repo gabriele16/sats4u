@@ -15,8 +15,6 @@ def log_return(series, periods=1):
 def get_utc_timestamp():
     return int(time.time())
 
-def get_utc_timestamp_date():
-
 def get_next_interval_start(current_time, time_frame):
     interval_duration = parse_time_frame(time_frame)
     return ((current_time // interval_duration) + 1) * interval_duration

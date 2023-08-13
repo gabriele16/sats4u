@@ -11,7 +11,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
     def __init__(self, crypto_pair="BTCUSDT", time_frame="15m", market = "spot"):
         # Call the __init__ methods of the parent classes explicitly
         self.time_frame = time_frame
-        self.set_data_folder_and_asset_details()
+        self.check_data_folder_and_asset_details()
         lc.CryptoData.__init__(self, self.asset_details, self.data_folder, market = market)
 
         self.trade_time_units(dt=60, kline_size=self.time_frame,
@@ -37,6 +37,15 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         root_dir = os.path.join(root_dir, "..")
         self.data_folder = os.path.join(root_dir, "data")
         self.asset_details = pd.read_csv(os.path.join(root_dir, "data", "asset_details.csv"))
+
+    # check if there is a folder named data and inside it a file named asset_details.csv
+    def check_data_folder_and_asset_details(self):
+        if not os.path.isdir("data"):
+            raise ValueError(f"data folder does not exist.")
+        self.data_folder = "data"
+        if not os.path.isfile(os.path.join(self.data_folder, "asset_details.csv")):
+            raise ValueError(f"Asset details file {os.path.join(self.data_folder, 'asset_details.csv')} does not exist.")
+        self.asset_details = pd.read_csv(os.path.join(self.data_folder, "asset_details.csv"))
 
     # Function to place an order
     def open_position(self, quantity, order_side="BUY",
@@ -224,7 +233,8 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
             self.portfolio_df.to_csv('portfolio.csv', header=True, index=False)
 
         # Append the new data to the portfolio_df
-        self.portfolio_df = self.portfolio_df.append(
+        else:
+            self.portfolio_df = self.portfolio_df.append(
             {
                 "Date": pd.Timestamp.now(),
                 "Total Balance": total_value,
@@ -237,23 +247,42 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
             ignore_index=True,
         )
 
-        self.portfolio_df.iloc[[-1]].to_csv('portfolio.csv', mode='a', header=False, index=False)
+            self.portfolio_df.iloc[[-1]].to_csv('portfolio.csv', mode='a', header=False, index=False)
 
         return total_value, current_returns, cumulative_returns
+    
+    def get_balance_history(self, balances):
+        # If balance_history is not defined, create it
+        if not hasattr(self, 'balance_history'):
+            self.balance_history = pd.DataFrame(columns=["Date"] + balances["Asset"].values.tolist())
+            self.balance_history.to_csv('balance_history.csv', header=True, index=False)
+
+        # Append the new data to the balance_history
+        self.balance_history = self.balance_history.append(
+                {
+                    "Date": pd.Timestamp.now(),
+                    self.reference_currency: float(balances[balances["Asset"] == self.reference_currency]['Amount'].values),
+                    self.crypto_asset : float(balances[balances["Asset"] == self.crypto_asset]['Amount'].values),
+                },
+                ignore_index=True,
+            )
+
+        self.balance_history.iloc[[-1]].to_csv('balance_history.csv', mode='a', header=False, index=False)
+
+        return self.balance_history
 
     def trade_loop(self, quantity):
         iteration = 0
         previous_signal = 0
         current_position = 0
         balances = self.get_account_balance(self.assets_to_trade, market = self.market)
-        balances.to_csv(f'account_balance_{iteration}.csv', header=True, index=False)
+        balance_history = self.get_balance_history(balances)
+#        balances.to_csv(f'account_balance_{iteration}.csv', header=True, index=False)
         self.initial_balance, current_returns, cumulative_returns = self.get_portfolio(balances)  # Store the initial balance for calculating returns
         # Set up logging
         logging.basicConfig(filename='trade_loop.log', level=logging.INFO,
                              format='%(asctime)s - %(levelname)s - %(message)s')
         
-        #sys.exit()
-
         while True:
             #try:
 
@@ -321,6 +350,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
 
                 # Calculate the portfolio details
                 balances = self.get_account_balance(self.assets_to_trade, market = self.market)
+                balance_history = self.get_balance_history(balances)
                 total_balance, current_returns, cumulative_returns = self.get_portfolio(balances,
                                                                                          model_signal=last_signal,
                                                                                          model_current_returns=model_current_returns,
@@ -330,7 +360,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 logging.info(f"Current Returns: {current_returns}")
                 logging.info(f"Cumulative Returns: {cumulative_returns}")
                 iteration += 1
-                balances.to_csv(f'account_balance_{iteration}.csv', header=True, index=False)
+                #balances.to_csv(f'account_balance_{iteration}.csv', header=True, index=False)
 
                 # Set the previous signal for the next iteration
                 previous_signal = last_signal

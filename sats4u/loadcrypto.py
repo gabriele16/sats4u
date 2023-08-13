@@ -70,7 +70,7 @@ class CryptoData:
 
     def _binance_api_constants(self):
 
-        self._binsizes = {"1m": 1, "5m": 5, "15m": 15, 
+        self._binsizes = {"1m": 1, "3m": 3, "5m": 5, "15m": 15, 
                           "30m":30 ,"1h": 60, "4h":60*4 ,
                           "1d": 60*24}
         self._batch_size = 750

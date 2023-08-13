@@ -8,7 +8,7 @@ def parse_arguments():
     # Add the arguments as options
     parser.add_argument("--quantity", type=float, help="Quantity of the crypto-currency to trade.")
     parser.add_argument("--crypto_pair", type=str, help="Cryptocurrency pair for trading.")
-    parser.add_argument("--time_frame", type=str, choices=["1m", "5m", "15m", "30m", "1h", "4h", "1d"], 
+    parser.add_argument("--time_frame", type=str, choices=["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1d"], 
                         help="Possible time-frame to trade, i.e. candlestick time duration.")
     parser.add_argument("--testnet", action="store_true", help="Use testnet mode for trading.")
     parser.add_argument("--market", type=str, default = "spot",
