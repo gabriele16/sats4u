@@ -11,6 +11,15 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
+def read_csv_candles(csv_file,crypto_name):
+    df_candles = pd.read_csv(csv_file).drop(columns=["Unnamed: 0","Count"+crypto_name])
+    df_candles["timestamp"] = (pd.to_numeric(df_candles["timestamp"])/1000).astype(int)
+    df_candles = df_candles.set_index("timestamp")
+    df_candles["Date"]= pd.to_datetime(df_candles["Date"])
+    candles = Candles(crypto_name,target="UpDown")
+    candles.set_candles(df_candles)
+    return candles
+
 class Candles:
     def __init__(self, cryptoname, target="Close", rollwindow=10):
 
