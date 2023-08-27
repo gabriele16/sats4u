@@ -48,15 +48,16 @@ def main():
         time_frames_dict = {"1d": 60 * 24, "4h": 60 * 4, "1h": 60, "30m": 30,
                             "15m": 15, "5m": 5, "3m":3 ,"1m": 1}
         time_frame = st.selectbox("Select time-frame", time_frames_dict.keys())
+        
 
         starting_dates_wrt_time_frame = {"1d":'1 Mar 2017', 
-                                        "4h":'1 Jan 2018', 
-                                        "1h":'1 Jan 2020',
-                                        "30m":'1 Jan 2021',
-                                        "15m":'1 May 2021',
-                                        "5m":'1 Jun 2022',
-                                        "3m":'1 Jan 2022',
-                                        "1m":'1 Jun 2023'
+                                        "4h": tu.get_earlier_utc_day(24000), 
+                                        "1h": tu.get_earlier_utc_day(6000),
+                                        "30m": tu.get_earlier_utc_day(3000),
+                                        "15m": tu.get_earlier_utc_day(1500),
+                                        "5m": tu.get_earlier_utc_day(500),
+                                        "3m": tu.get_earlier_utc_day(300),
+                                        "1m": tu.get_earlier_utc_day(100)
                                         }
         starting_date = starting_dates_wrt_time_frame[time_frame]
 
