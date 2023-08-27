@@ -51,11 +51,11 @@ def main():
         
 
         starting_dates_wrt_time_frame = {"1d":'1 Mar 2017', 
-                                        "4h": '1 Mar 2019', 
-                                        "1h": '1 Oct 2020',
-                                        "30m": '1 Jan 2021',
-                                        "15m": '1 Jan 2022',
-                                        "5m": '1 Jan 2023',
+                                        "4h": '1 Mar 2018', 
+                                        "1h": '1 Oct 2019',
+                                        "30m": '1 Jan 2020',
+                                        "15m": '1 Jan 2021',
+                                        "5m": '1 Jun 2022',
                                         "3m": tu.get_earlier_utc_day(300),
                                         "1m": tu.get_earlier_utc_day(100)
                                         }
