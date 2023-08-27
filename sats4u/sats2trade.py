@@ -50,7 +50,8 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
     # Function to place an order
     def open_position(self, quantity, order_side="BUY",
                       market = "spot",
-                      is_isolated_margin="FALSE"):
+                      is_isolated_margin="FALSE",
+                      leverage="1"):
 
     # To try out for a stop loss order
     # order = client.create_order(
@@ -80,14 +81,16 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                     side=order_side,
                     type='MARKET',
                     quantity=quantity,
-                    isIsolated=is_isolated_margin
+                    isIsolated=is_isolated_margin,
+                    leverage=leverage
                 )
+                logging.info(f"Futures {order_side} order details: {order}")
                 logging.info(f"Futures {order_side} order {order['orderId']} placed successfully: {order}")
             except Exception as e:
                 logging.info(f"Error opening Futures {order_side} order:", e)
 
     def close_position(self, quantity, order_side = "SELL",
-                       market = "spot"):
+                       market = "spot", is_isolated_margin="FALSE",leverage="1"):
         
         if market == "spot":
             try:
@@ -110,19 +113,20 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                     symbol=self.crypto_pair,
                     side=order_side,  # To close a short position, you buy the same amount of the asset
                     type='MARKET',
-                    quantity=quantity
+                    quantity=quantity,
+                    is_isolated_margin=is_isolated_margin,
+                    leverage=leverage
                 )
                 if order_side == "SELL":
                     position_type = "LONG"
                 elif order_side == "BUY":
                     position_type = "SHORT"
+                logging.info(f"Futures {order_side} order details: {order}")
                 logging.info(f"Futures {position_type} position closed successfully: {order}")
             except Exception as e:
                 logging.error(f"Error closing Futures {position_type} position:", e)
 
-
-
-    def close_all_positions(self, market = "spot"):
+    def close_all_positions(self, market = "spot",leverage="1"):
 
         if market == "spot":
             try:
@@ -143,20 +147,19 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
             try:
                 # Get the account information
                 account_info = self.binance_client.futures_account(version=2)
-                open_positions = account_info["assets"]
+                open_positions = account_info["positions"]
                 
                 # Loop through the open positions and close them
                 for position in open_positions:
-                     if position["asset"] == self.crypto_asset:
+                     if position["symbol"] == self.crypto_asset:
                 #         # Check the position side (BUY or SELL) and call the appropriate function to close the position
-                         if float(position["walletBalance"]) > 1e-5 :
-                            self.close_position(float(position["free"]), order_side="SELL", market = market)
+                         if float(position["positionAmt"]) > 1e-5 :
+                            self.close_position(float(position["free"]), order_side="SELL", market = market, leverage=leverage)
             except Exception as e:
                 logging.error("Error closing open positions:", e)
         #sleep a little bit after closing the positions to make sure the orders are filled  
         time.sleep(10)          
     
-
     # # Function to place a sell order
     # def place_sell_order(self, quantity):
     #     try:
@@ -216,12 +219,14 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         # Calculate the current returns and cumulative returns
         if not hasattr(self, 'initial_balance'):
             self.initial_balance = total_value
+            self.previous_balance = total_value
 
-        current_returns = (total_value / self.initial_balance) - 1
+        current_returns = (total_value / self.previous_balance) - 1
         if not hasattr(self, 'cumulative_returns'):
             cumulative_returns = 0.0
         else:
-            cumulative_returns = (1 + self.cumulative_returns) * (1 + current_returns) - 1
+            cumulative_returns = total_value / self.initial_balance - 1
+#            cumulative_returns = (1 + self.cumulative_returns) * (1 + current_returns) - 1
         self.cumulative_returns = cumulative_returns
 
         # If portfolio_df is not defined, create it
@@ -275,13 +280,16 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         iteration = 0
         previous_signal = 0
         current_position = 0
-        balances = self.get_account_balance(self.assets_to_trade, market = self.market)
+        balances = self.get_account_balance(self.assets_to_trade,
+                                            self.crypto_asset,
+                                            market = self.market)
         balance_history = self.get_balance_history(balances)
 #        balances.to_csv(f'account_balance_{iteration}.csv', header=True, index=False)
-        self.initial_balance, current_returns, cumulative_returns = self.get_portfolio(balances)  # Store the initial balance for calculating returns
+        total_balance, current_returns, cumulative_returns = self.get_portfolio(balances)  # Store the initial balance for calculating returns
         # Set up logging
         logging.basicConfig(filename='trade_loop.log', level=logging.INFO,
                              format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.info(f"Starting trading loop on the {self.market} market...")
         
         while True:
             #try:
@@ -310,9 +318,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                                         is_isolated_margin = "FALSE")
                     # Calculate the value of the order in USDT and update the balance
                     order_value = quantity * self.get_last_price(self.crypto_pair)
-                    self.initial_balance -= order_value
+                    #self.initial_balance -= order_value
                     current_position = 1
-                    logging.info(f"Placed a buy order for {quantity} {self.crypto_pair} at {tu.get_utc_timestamp()}")
+                    logging.info(f"Placed a buy order for {quantity} {self.crypto_pair}")
                     logging.info(f"Order value in {self.reference_currency}: {order_value}")
 
                 # If the signal changes from 1 to 0 and there is an open position, close the position
@@ -320,9 +328,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                     self.close_position(quantity, order_side='SELL', market = self.market)
                     # Calculate the value of the order in USDT and update the balance
                     order_value = quantity * self.get_last_price(self.crypto_pair)
-                    self.initial_balance += order_value
+                    #self.initial_balance += order_value
                     current_position = 0
-                    logging.info(f"Closed position for {quantity} {self.crypto_pair} at {tu.get_utc_timestamp()}")
+                    logging.info(f"Closed position for {quantity} {self.crypto_pair}")
                     logging.info(f"Order value in {self.reference_currency}: {order_value}")                    
 
                 # If the signal changes from 0 to -1, place a short sell order
@@ -331,9 +339,9 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                                        is_isolated_margin = "TRUE")
                     # Calculate the value of the order in USDT and update the balance
                     order_value = quantity * self.get_last_price(self.crypto_pair)
-                    self.initial_balance -= order_value
+                    #self.initial_balance -= order_value
                     current_position = -1
-                    logging.info(f"Placed a short sell order for {quantity} {self.crypto_pair} at {tu.get_utc_timestamp()}")
+                    logging.info(f"Placed a short sell order for {quantity} {self.crypto_pair}")
                     logging.info(f"Order value in {self.reference_currency}: {order_value}")
 
                 # If the signal changes from -1 to 0 and there is an open short position, close the short position
@@ -341,15 +349,17 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                     self.close_position(quantity, order_side='BUY', market = self.market)
                     # Calculate the value of the order in USDT and update the balance
                     order_value = quantity * self.get_last_price(self.crypto_pair)
-                    self.initial_balance += order_value
+                    #self.initial_balance += order_value
                     current_position = 0
-                    logging.info(f"Closed short position for {quantity} {self.crypto_pair} at {tu.get_utc_timestamp()}")
+                    logging.info(f"Closed short position for {quantity} {self.crypto_pair}")
                     logging.info(f"Order value in {self.reference_currency}: {order_value}")
                 else:
                     logging.info("No trade action taken.")
 
                 # Calculate the portfolio details
-                balances = self.get_account_balance(self.assets_to_trade, market = self.market)
+                balances = self.get_account_balance(self.assets_to_trade, 
+                                                    self.crypto_asset,
+                                                    market = self.market)
                 balance_history = self.get_balance_history(balances)
                 total_balance, current_returns, cumulative_returns = self.get_portfolio(balances,
                                                                                          model_signal=last_signal,
@@ -359,6 +369,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
                 logging.info(f"Total Balance: {total_balance}")
                 logging.info(f"Current Returns: {current_returns}")
                 logging.info(f"Cumulative Returns: {cumulative_returns}")
+                self.previous_balance = total_balance
                 iteration += 1
                 #balances.to_csv(f'account_balance_{iteration}.csv', header=True, index=False)
 

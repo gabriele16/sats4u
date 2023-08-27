@@ -323,7 +323,7 @@ class CryptoData:
     #         print("Error fetching account balance:", e)
     #         return None
 
-    def get_account_balance(self, assets, market = "spot"):
+    def get_account_balance(self, assets, crypto_asset, market = "spot"):
         try:
             # Get the account balance for the specified asset
             if market == "spot":
@@ -331,7 +331,15 @@ class CryptoData:
                 balances= account_info["balances"]
             elif market == "futures":
                 account_info = self.binance_client.futures_account(version=2)
-                balances = account_info["assets"]
+                assets = account_info["assets"]
+                positions = account_info["positions"]
+
+            # print("ACCOUNT INFO")
+            # print(account_info)
+            print("BALANCES")
+            print(account_info["assets"])
+            print("POSITIONS")
+            print(account_info["positions"])
 
             # Create a DataFrame to store the balances of all assets
             balance_data = {"Asset": [], "Amount": []}
@@ -347,6 +355,11 @@ class CryptoData:
 
                     balance_data["Asset"].append(asset_name)
                     balance_data["Amount"].append(balance)
+            
+            for position in positions:
+                if position["symbol"] in crypto_asset:
+                    balance_data["Asset"].append(crypto_asset)
+                    balance_data["Amount"].append(float(position["positionAmt"]))
 
             balances_df = pd.DataFrame(balance_data)
             return balances_df
