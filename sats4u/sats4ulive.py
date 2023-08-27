@@ -60,6 +60,7 @@ def main():
                                         "1m": tu.get_earlier_utc_day(100)
                                         }
         starting_date = starting_dates_wrt_time_frame[time_frame]
+        print(starting_date)
 
     st.title(f"Real-time {time_frame} {crypto_pair_dict[crypto_pair]} Chart")
 
