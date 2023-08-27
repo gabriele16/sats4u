@@ -191,7 +191,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         # Get the signals DataFrame
         in_step = self.rollwindow
         last_step = self.candles.shape[0]
-        signals_df = self.get_vma_dataframe(in_step, last_step)
+        signals_df = self.get_vma_dataframe_dbg(in_step, last_step)
         if not os.path.isfile("signals.csv"):
             signals_df.to_csv('signals.csv', mode='a', header=True, index=False)
         else:
@@ -236,7 +236,7 @@ class Sats2Trade(lc.CryptoData, fb.Candles):
         else:
             self.portfolio_df = self.portfolio_df.append(
             {
-                "Date": pd.Timestamp.now(),
+                "Date": pd.Timestamp.utcnow(),
                 "Total Balance": total_value,
                 "Returns": current_returns,
                 "Cumulative Returns": cumulative_returns,

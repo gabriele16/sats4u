@@ -49,14 +49,14 @@ def main():
                             "15m": 15, "5m": 5, "3m":3 ,"1m": 1}
         time_frame = st.selectbox("Select time-frame", time_frames_dict.keys())
 
-        starting_dates_wrt_time_frame = {'1 Mar 2017':"1d", 
-                                        '1 Jan 2018':"4h", 
-                                        '1 Jan 2020':"1h",
-                                        '1 Jan 2021':"30m",
-                                        '1 May 2021':"15m",
-                                        '1 Jun 2022':"5m",
-                                        '1 Jan 2022':"3m",
-                                        '1 Jan 2023':"1m"
+        starting_dates_wrt_time_frame = {"1d":'1 Mar 2017', 
+                                        "4h":'1 Jan 2018', 
+                                        "1h":'1 Jan 2020',
+                                        "30m":'1 Jan 2021',
+                                        "15m":'1 May 2021',
+                                        "5m":'1 Jun 2022',
+                                        "3m":'1 Jan 2022',
+                                        "1m":'1 Jun 2023'
                                         }
         starting_date = starting_dates_wrt_time_frame[time_frame]
 

@@ -452,6 +452,78 @@ class Candles:
 
         return vma_df            
 
+    def get_vma_dataframe_dbg(self, in_step, last_step):
+        """
+        This is a debug version of the get_vma_dataframe() function made to trade more frequently.
+        It is used to check the trading signals and the returns.
+        The differences are that it uses less conservative conditions for the trading signals.
+        The RSI thresholds are less restrictive, the if the vma_gold and vma_line intersect with the High and Low 
+        candlesticks we do not set the signal to 0, and we only check one previous 1 candlesticks the vma_line and red/green dots.
+        """
+
+        vma_df = pd.DataFrame({
+            "Date": self.candles[in_step:last_step].index,
+            "vma_line": self.candles['vma'][in_step:last_step],
+            "vma_gold": self.candles['vma'][in_step:last_step].where(
+                        self.candles['vma'][in_step:last_step].duplicated(keep=False),
+                        np.nan),
+            "red_scatter": self.candles["High"][in_step:last_step].where(
+                (self.candles['Close'][in_step:last_step] + 
+                 self.candles["Close"][in_step:last_step]) * 0.5 <
+                self.candles["ma"][in_step:last_step] * (1 - 1e-4)).replace(0.0, np.nan),
+            "green_scatter": self.candles["Low"][in_step:last_step].where(
+                (self.candles['Close'][in_step:last_step] +
+                  self.candles["Close"][in_step:last_step]) * 0.5 >
+                self.candles["ma"][in_step:last_step] * (1 + 1e-4)).replace(0.0, np.nan)
+        })
+
+        # Add the 'Signal' column based on the trading strategy
+        vma_df['Signal'] = 0  # Initialize with 0 (Hold)
+
+        vma_df['Signal'] = np.where(
+            (vma_df['green_scatter'].shift(1) > vma_df['vma_line'].shift(1)) &
+            (vma_df['green_scatter'] > vma_df['vma_line']),
+            1,  # Long signal (Buy)
+            vma_df['Signal']
+        )
+
+        vma_df['Signal'] = np.where(
+            (vma_df['red_scatter'].shift(1) < vma_df['vma_line'].shift(1)) &
+            (vma_df['red_scatter'] < vma_df['vma_line']),
+            -1,  # Short signal (Sell), if 0 then it is Hold
+            vma_df['Signal']
+        )
+
+        # vma_df["Signal"] = np.where(
+        #     (vma_df["vma_line"] < self.candles['High'][in_step:last_step]) &
+        #     (vma_df["vma_line"] > self.candles['Low'][in_step:last_step] ),
+        #     0, vma_df["Signal"]
+        # )
+
+        # vma_df["Signal"] = np.where(
+        #     pd.notna(vma_df["vma_gold"]), 0, vma_df["Signal"]
+        # )
+
+        vma_df["Signal"] = np.where(
+            (self.candles["RSI"][in_step:last_step] > 80. ) & 
+            (vma_df["Signal"] == 1)
+            , 0, vma_df["Signal"]
+        ) # Do not go long if RSI > 70
+
+        vma_df["Signal"] = np.where(
+            (self.candles["RSI"][in_step:last_step] < 20. ) & 
+            (vma_df["Signal"] == -1)
+            , 0, vma_df["Signal"]
+        ) # Do not go short if RSI < 30
+
+        # Calculate the returns in percentage based on the trading signals
+        vma_df['Returns'] = vma_df['Signal'].shift(1) * 0.5*(self.candles['Close'][in_step:last_step] +
+                                                         self.candles['Open'][in_step:last_step]).pct_change()
+        vma_df["Cumulative Returns"] = (1 + vma_df["Returns"]).cumprod() -1.
+
+        return vma_df            
+
+
     def ta_vma_plotly(self, in_step, last_step):
 
         if last_step == 0:
