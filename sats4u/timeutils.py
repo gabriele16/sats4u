@@ -18,7 +18,7 @@ def get_utc_timestamp():
 def get_earlier_utc_day(minutes=1):
      now = datetime.utcnow()
      earlier = now - timedelta(minutes=minutes)
-     earlier_str = earlier.strftime("%d %m %Y")
+     earlier_str = earlier.strftime("%d %b %Y")
      return earlier_str
      
 
